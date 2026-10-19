@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "anki": {
+      "type": "stdio",
+      "command": "anki-librarian-mcp",
+      "args": ["--config", "anki-librarian.toml", "serve"]
+    }
+  }
+}

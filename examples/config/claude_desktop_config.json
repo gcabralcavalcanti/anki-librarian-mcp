@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "anki": {
+      "command": "anki-librarian-mcp",
+      "args": ["--config", "/absolute/path/to/anki-librarian.toml", "serve"]
+    }
+  }
+}

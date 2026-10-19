@@ -59,7 +59,7 @@ Everything (proposed, approved, rejected, applied, failed, blocked) goes to an a
 | Human flags | - | the red flag is the human's; the agent only sets/clears its own color and never overwrites another |
 | Audit log | - | append-only JSON lines |
 | Retries | - | reads retried with backoff; writes never retried (no duplicate writes on timeout) |
-| Tests | - | 43 tests with a fake AnkiConnect (in-process and over HTTP) + an end-to-end MCP session over stdio |
+| Tests | - | 44 tests with a fake AnkiConnect (in-process and over HTTP) + an end-to-end MCP session over stdio |
 
 Media (images and audio on cards) is not supported yet; Clanki has it.
 
@@ -73,13 +73,41 @@ cp anki-librarian.example.toml anki-librarian.toml     # then list your writable
 anki-librarian-mcp check                                 # shows the settings and pings AnkiConnect
 ```
 
-Claude Code:
+Ready-made client configs are in [`examples/config/`](examples/config/):
+
+| Client | File | Where it goes |
+|---|---|---|
+| Claude Code (project) | [`.mcp.json`](examples/config/.mcp.json) | project root; or run `claude mcp add anki -- anki-librarian-mcp --config anki-librarian.toml serve` |
+| Claude Desktop | [`claude_desktop_config.json`](examples/config/claude_desktop_config.json) | Settings > Developer > Edit Config; merge the `mcpServers` entry |
+| Either, from a source checkout | [`claude_desktop_config.from_source.json`](examples/config/claude_desktop_config.from_source.json) | same, without installing the package |
+
+Restart the client; the tools appear as `anki`. Start with an empty `writable_decks` list (read-only) and add a
+test deck before your real ones.
+
+## What a session looks like
+
+Condensed from [`examples/demo_transcript.md`](examples/demo_transcript.md) (the real server process over stdio,
+with a fake Anki):
+
 ```
-claude mcp add anki -- anki-librarian-mcp --config /path/to/anki-librarian.toml serve
-```
-Claude Desktop (`claude_desktop_config.json`):
-```json
-{"mcpServers": {"anki": {"command": "anki-librarian-mcp", "args": ["--config", "/path/to/anki-librarian.toml", "serve"]}}}
+user   > (illustrative) add these 3 cards on the Taylor rule to Economics::Macro (+1 on Okun's law)
+model  > find_notes("taylor")               -> 1 note: "What does the Taylor rule set?"
+model  > propose_add_notes(4 notes)         -> status invalid
+           note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)
+model  > propose_add_notes(3 notes)         -> status pending, nothing written yet
+           to add: 2 · skipped as duplicate: 1 (note 1700000000000)
+           similar flagged: "What does the Taylor rule target?" ~ existing front (0.92)
+model  > apply_plan(p-...)
+server -> asks the HUMAN (elicitation form, not the model):
+           Add 2 note(s) to 'Economics::Macro'
+             + What does the Taylor rule target?
+             + Taylor principle
+           Skipped as duplicates: 1 · Similar to existing notes: 1 (check before approving)
+           Write this to Anki?                                    [approve]
+server -> applied: created 2, mismatched after write 0 (read back from Anki)
+model  > propose_delete_notes([...])        -> BLOCKED: deleteNotes is off. Turning it on is the
+                                               human's decision (allow_delete = true in the config).
+audit  : proposed (invalid) · proposed · approved via mcp elicitation · applied · blocked
 ```
 
 ## Tools
@@ -110,7 +138,7 @@ deck until you list one, delete and reschedule off, approval by the human.
 
 ```
 pip install -e ".[test]"
-python -m pytest                      # 43 tests, fake AnkiConnect, no Anki needed
+python -m pytest                      # 44 tests, fake AnkiConnect, no Anki needed
 python examples/demo_session.py       # real server process over stdio + fake Anki over HTTP
 ```
 
