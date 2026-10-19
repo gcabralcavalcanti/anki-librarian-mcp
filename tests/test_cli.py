@@ -1,4 +1,5 @@
 """The human's side: approval only from an interactive terminal, by typing the plan id."""
+
 import io
 
 from anki_librarian_mcp import cli
@@ -25,7 +26,9 @@ def test_approve_needs_the_plan_id_typed(lib):
 
 def test_example_config_loads(tmp_path):
     from pathlib import Path
+
     from anki_librarian_mcp import config
+
     s = config.load(Path(__file__).parent.parent / "anki-librarian.example.toml")
     assert s.allow_delete is False and s.allow_reschedule is False and s.approval == "elicit"
     assert s.deck_writable("Inbox::Today") and not s.deck_writable("Personal::Journal")
@@ -34,6 +37,7 @@ def test_example_config_loads(tmp_path):
 def test_client_configs_are_valid_and_start_the_server():
     import json
     from pathlib import Path
+
     folder = Path(__file__).parent.parent / "examples" / "config"
     files = sorted(set(folder.glob("*.json")) | {folder / ".mcp.json"})
     assert len(files) == 3

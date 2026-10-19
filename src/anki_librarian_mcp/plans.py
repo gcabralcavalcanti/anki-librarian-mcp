@@ -1,14 +1,15 @@
 """Plans (dry runs waiting for a human) and the audit log, both kept as plain files in the state folder."""
+
 from __future__ import annotations
 
 import json
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 
 def now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Audit:
@@ -26,7 +27,7 @@ class Audit:
     def tail(self, n: int = 20) -> list[dict]:
         if not self.path.exists():
             return []
-        return [json.loads(l) for l in self.path.read_text(encoding="utf-8").splitlines()[-n:]]
+        return [json.loads(line) for line in self.path.read_text(encoding="utf-8").splitlines()[-n:]]
 
 
 class PlanStore:
@@ -48,10 +49,16 @@ class PlanStore:
     def create(self, kind: str, steps: list[dict], preview: dict, errors: list[str]) -> dict:
         plans = self._load()
         pid = "p-" + secrets.token_hex(3)
-        plan = {"id": pid, "kind": kind, "created": now().isoformat(timespec="seconds"),
-                "expires": (now() + self.ttl).isoformat(timespec="seconds"),
-                "status": "invalid" if errors else "pending", "errors": errors,
-                "preview": preview, "steps": steps}
+        plan = {
+            "id": pid,
+            "kind": kind,
+            "created": now().isoformat(timespec="seconds"),
+            "expires": (now() + self.ttl).isoformat(timespec="seconds"),
+            "status": "invalid" if errors else "pending",
+            "errors": errors,
+            "preview": preview,
+            "steps": steps,
+        }
         plans[pid] = plan
         self._save(plans)
         return plan

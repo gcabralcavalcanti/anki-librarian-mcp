@@ -1,25 +1,21 @@
-"""server.py - the MCP server: tools that a model (Claude Code, Claude Desktop, any MCP client) can call.
-
-Reads are plain tools. Every write is two calls: `propose_*` returns a dry-run plan, and `apply_plan` writes
-it only after the HUMAN approves. With approval = "elicit" the server asks the human through the MCP client
-(an elicitation form the model cannot answer); if the client cannot show one, the human approves in a terminal
-with `anki-librarian-mcp approve <plan>`, which refuses to run without an interactive terminal.
+"""MCP server. Reads are plain tools; writes are propose_* (a dry-run plan) then apply_plan, which asks the
+human through MCP elicitation, or tells them to approve in a terminal when the client cannot ask.
 """
+
 from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import BaseModel, Field
-
 from mcp import types
 from mcp.server.mcpserver import Context, MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from pydantic import BaseModel, Field
 
 from .connect import AnkiError, Blocked
 from .service import Librarian, PlanError
 
 READ_ONLY = types.ToolAnnotations(readOnlyHint=True, openWorldHint=False)
-PROPOSE = types.ToolAnnotations(readOnlyHint=True, openWorldHint=False)          # a plan writes nothing to Anki
+PROPOSE = types.ToolAnnotations(readOnlyHint=True, openWorldHint=False)  # a plan writes nothing to Anki
 APPLY = types.ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 
 INSTRUCTIONS = """Anki through a locked door. Reads are free. To change the collection: call a propose_* tool,
@@ -147,7 +143,7 @@ def build_server(lib: Librarian) -> MCPServer:
             if caps is not None and getattr(caps, "elicitation", None):
                 try:
                     res = await ctx.elicit(_summary(plan) + "\n\nWrite this to Anki?", Approval)
-                except Exception:  # noqa: BLE001 - client advertised elicitation but cannot answer now
+                except Exception:
                     res = None
                 if res is not None:
                     if res.action == "accept" and res.data and res.data.approve:
@@ -155,8 +151,10 @@ def build_server(lib: Librarian) -> MCPServer:
                     else:
                         return lib.reject(plan_id, via="mcp elicitation", reason=f"user answered {res.action}")
             if lib.get_plan(plan_id)["status"] == "pending":
-                return lib.view(plan) | {"next": "this client cannot ask the user; the user approves in a "
-                                                 f"terminal: anki-librarian-mcp approve {plan_id}, then call apply_plan"}
+                return lib.view(plan) | {
+                    "next": "this client cannot ask the user; the user approves in a "
+                    f"terminal: anki-librarian-mcp approve {plan_id}, then call apply_plan"
+                }
         return _safe(lambda: lib.apply(plan_id))
 
     @app.tool(annotations=types.ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False))

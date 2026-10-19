@@ -1,28 +1,72 @@
 # anki-librarian-mcp
 
-An MCP server that lets a model (Claude Code, Claude Desktop, any MCP client) work with your Anki collection
-through **a locked door**: reads are free, and every write is a dry-run plan that a human approves before
-anything reaches Anki. It is the public version of the flashcard librarian I run daily in my own agent system,
-and an extended take on [Clanki](https://github.com/jasperket/clanki).
+An MCP server that lets a model work with your Anki collection through a locked door: reads are free, every
+write is a dry-run plan that a human approves before anything reaches Anki.
 
-Why: years of review history are the asset. A model that can add, edit and delete notes in bulk will, sooner
-or later, create duplicates, invent tags, or touch something it should not. Here the server, not the prompt,
-enforces the rules.
+![Built with AI assistance](https://img.shields.io/badge/built%20with-AI%20assistance-6b46c1)
 
-## How a write works
+## Results
 
-```mermaid
-flowchart LR
-    M["Model"] -- "propose_add_notes" --> R{"reconcile<br/>search the collection"}
-    R --> V{"validate<br/>tags, cloze, writable decks"}
-    V --> P["plan (dry run)<br/>to add / skipped / similar / errors"]
-    P -- "apply_plan" --> H(["Human approves<br/>MCP elicitation or terminal"])
-    H --> W["write via AnkiConnect"]
-    W --> C["read back and compare"]
-    P -.-> A[("audit log")]
-    H -.-> A
-    C -.-> A
+| Result | Source in this repo |
+|---|---|
+| One session against the real server process: a plan rejected for a bad tag, a duplicate skipped, a similar front flagged (0.92), a write approved by the human and read back, a delete blocked | `python demo.py` · [`examples/demo_transcript.md`](examples/demo_transcript.md) |
+| Delete and reschedule are off by default; sync, card resets and deck deletion never leave the server | [`src/anki_librarian_mcp/connect.py`](src/anki_librarian_mcp/connect.py) · [`tests/test_connect.py`](tests/test_connect.py) |
+| 44 tests on a fake AnkiConnect (in memory and over HTTP) plus a full MCP client session; no Anki needed | [`tests/`](tests/) |
+| No test, demo or CI run ever writes to a real collection | [`tests/fake_anki.py`](tests/fake_anki.py) |
+
+![Write flow: propose, reconcile and check, plan, human approval, write and read back, audit log](docs/write-flow.svg)
+
+## Run it
+
 ```
+pip install -r requirements.txt
+python demo.py
+```
+
+It starts a fake AnkiConnect, launches the server over stdio as Claude Code or Claude Desktop would, and plays
+one session (the human's click is simulated):
+
+```
+user   > (illustrative) add these 3 cards on the Taylor rule to Economics::Macro (+1 on Okun's law)
+model  > find_notes("taylor")               -> 1 note: "What does the Taylor rule set?"
+model  > propose_add_notes(4 notes)         -> status invalid
+           note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)
+model  > propose_add_notes(3 notes)         -> status pending, nothing written yet
+           to add: 2 · skipped as duplicate: 1 (note 1700000000000)
+           similar flagged: "What does the Taylor rule target?" ~ existing front (0.92)
+model  > apply_plan(p-...)
+server -> asks the HUMAN (elicitation form, not the model):
+           Add 2 note(s) to 'Economics::Macro'
+             + What does the Taylor rule target?
+             + Taylor principle
+           Skipped as duplicates: 1 · Similar to existing notes: 1 (check before approving)
+           Write this to Anki?                                    [approve]
+server -> applied: created 2, mismatched after write 0 (read back from Anki)
+model  > propose_delete_notes([...])        -> BLOCKED: deleteNotes is off. Turning it on is the
+                                               human's decision (allow_delete = true in the config).
+audit  : proposed (invalid) · proposed · approved via mcp elicitation · applied · blocked
+```
+
+To use it with your own Anki you need Anki desktop with the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on:
+
+```
+pip install git+https://github.com/gcabralcavalcanti/anki-librarian-mcp
+cp anki-librarian.example.toml anki-librarian.toml     # then list your writable decks and taxonomy
+anki-librarian-mcp check                                 # shows the settings and pings AnkiConnect
+```
+
+Ready-made client configs are in [`examples/config/`](examples/config/):
+
+| Client | File | Where it goes |
+|---|---|---|
+| Claude Code (project) | [`.mcp.json`](examples/config/.mcp.json) | project root; or run `claude mcp add anki -- anki-librarian-mcp --config anki-librarian.toml serve` |
+| Claude Desktop | [`claude_desktop_config.json`](examples/config/claude_desktop_config.json) | Settings > Developer > Edit Config; merge the `mcpServers` entry |
+| Either, from a source checkout | [`claude_desktop_config.from_source.json`](examples/config/claude_desktop_config.from_source.json) | same, without installing the package |
+
+Restart the client; the tools appear as `anki`. Start with an empty `writable_decks` list (read-only) and add a
+test deck before your real ones.
+
+## How it works
 
 1. **Propose.** Every write tool (`propose_*`) returns a plan and writes nothing. Before building it the server
    searches the collection: an exact duplicate is skipped, "same front, different back" is left for the human,
@@ -39,7 +83,33 @@ flowchart LR
 
 Everything (proposed, approved, rejected, applied, failed, blocked) goes to an append-only audit log.
 
-## Clanki × anki-librarian-mcp
+### Tools
+
+| Tool | Writes? | What it does |
+|---|---|---|
+| `list_decks` | no | all decks, and which are writable |
+| `find_notes(query, limit)` | no | Anki search syntax; ids, model, decks, tags, field excerpts |
+| `get_notes(note_ids)` | no | full fields and tags |
+| `propose_add_notes(deck, notes)` | plan | basic notes, 1-50, reconciled and validated |
+| `propose_add_cloze_notes(deck, notes)` | plan | cloze notes, 1-50 |
+| `propose_update_note(note_id, fields, tags)` | plan | diff before/after |
+| `propose_create_deck(name)` | plan | inside the writable decks |
+| `propose_flag_cards(card_ids, color)` | plan | agent colors only; human flags skipped |
+| `propose_delete_notes(note_ids)` | plan | only if `allow_delete = true` |
+| `propose_set_due_date(card_ids, days)` | plan | only if `allow_reschedule = true` |
+| `apply_plan(plan_id)` | **yes** | asks the human if pending; writes; reads back |
+| `list_plans(status)` · `reject_plan(plan_id)` | no | plan housekeeping |
+
+Human side (terminal): `anki-librarian-mcp plans | show <id> | approve <id> | reject <id> | audit`.
+
+### Configuration
+
+See [`anki-librarian.example.toml`](anki-librarian.example.toml). Every default is the safe one: no writable
+deck until you list one, delete and reschedule off, approval by the human.
+
+### Compared with Clanki
+
+[Clanki](https://github.com/jasperket/clanki) is the server this one extends.
 
 | | Clanki | anki-librarian-mcp |
 |---|---|---|
@@ -63,90 +133,7 @@ Everything (proposed, approved, rejected, applied, failed, blocked) goes to an a
 
 Media (images and audio on cards) is not supported yet; Clanki has it.
 
-## Install
-
-Requires Anki desktop with the [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on.
-
-```
-pip install git+https://github.com/gcabralcavalcanti/anki-librarian-mcp
-cp anki-librarian.example.toml anki-librarian.toml     # then list your writable decks and taxonomy
-anki-librarian-mcp check                                 # shows the settings and pings AnkiConnect
-```
-
-Ready-made client configs are in [`examples/config/`](examples/config/):
-
-| Client | File | Where it goes |
-|---|---|---|
-| Claude Code (project) | [`.mcp.json`](examples/config/.mcp.json) | project root; or run `claude mcp add anki -- anki-librarian-mcp --config anki-librarian.toml serve` |
-| Claude Desktop | [`claude_desktop_config.json`](examples/config/claude_desktop_config.json) | Settings > Developer > Edit Config; merge the `mcpServers` entry |
-| Either, from a source checkout | [`claude_desktop_config.from_source.json`](examples/config/claude_desktop_config.from_source.json) | same, without installing the package |
-
-Restart the client; the tools appear as `anki`. Start with an empty `writable_decks` list (read-only) and add a
-test deck before your real ones.
-
-## What a session looks like
-
-Condensed from [`examples/demo_transcript.md`](examples/demo_transcript.md) (the real server process over stdio,
-with a fake Anki):
-
-```
-user   > (illustrative) add these 3 cards on the Taylor rule to Economics::Macro (+1 on Okun's law)
-model  > find_notes("taylor")               -> 1 note: "What does the Taylor rule set?"
-model  > propose_add_notes(4 notes)         -> status invalid
-           note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)
-model  > propose_add_notes(3 notes)         -> status pending, nothing written yet
-           to add: 2 · skipped as duplicate: 1 (note 1700000000000)
-           similar flagged: "What does the Taylor rule target?" ~ existing front (0.92)
-model  > apply_plan(p-...)
-server -> asks the HUMAN (elicitation form, not the model):
-           Add 2 note(s) to 'Economics::Macro'
-             + What does the Taylor rule target?
-             + Taylor principle
-           Skipped as duplicates: 1 · Similar to existing notes: 1 (check before approving)
-           Write this to Anki?                                    [approve]
-server -> applied: created 2, mismatched after write 0 (read back from Anki)
-model  > propose_delete_notes([...])        -> BLOCKED: deleteNotes is off. Turning it on is the
-                                               human's decision (allow_delete = true in the config).
-audit  : proposed (invalid) · proposed · approved via mcp elicitation · applied · blocked
-```
-
-## Tools
-
-| Tool | Writes? | What it does |
-|---|---|---|
-| `list_decks` | no | all decks, and which are writable |
-| `find_notes(query, limit)` | no | Anki search syntax; ids, model, decks, tags, field excerpts |
-| `get_notes(note_ids)` | no | full fields and tags |
-| `propose_add_notes(deck, notes)` | plan | basic notes, 1-50, reconciled and validated |
-| `propose_add_cloze_notes(deck, notes)` | plan | cloze notes, 1-50 |
-| `propose_update_note(note_id, fields, tags)` | plan | diff before/after |
-| `propose_create_deck(name)` | plan | inside the writable decks |
-| `propose_flag_cards(card_ids, color)` | plan | agent colors only; human flags skipped |
-| `propose_delete_notes(note_ids)` | plan | only if `allow_delete = true` |
-| `propose_set_due_date(card_ids, days)` | plan | only if `allow_reschedule = true` |
-| `apply_plan(plan_id)` | **yes** | asks the human if pending; writes; reads back |
-| `list_plans(status)` · `reject_plan(plan_id)` | no | plan housekeeping |
-
-Human side (terminal): `anki-librarian-mcp plans | show <id> | approve <id> | reject <id> | audit`.
-
-## Configuration
-
-See [`anki-librarian.example.toml`](anki-librarian.example.toml). Every default is the safe one: no writable
-deck until you list one, delete and reschedule off, approval by the human.
-
-## Demo and tests
-
-```
-pip install -e ".[test]"
-python -m pytest                      # 44 tests, fake AnkiConnect, no Anki needed
-python examples/demo_session.py       # real server process over stdio + fake Anki over HTTP
-```
-
-[`examples/demo_transcript.md`](examples/demo_transcript.md) is the output of the demo: a search, a plan that is
-invalid because of a tag, the corrected plan (one duplicate skipped, one similar front flagged), the approval
-form the human sees, the write and its verification, a blocked delete, and the audit log.
-
-## Design notes
+### Design notes
 
 - **The server enforces, the prompt only explains.** The tool descriptions tell the model the rules, but the
   lock in `connect.py` classifies every AnkiConnect action before a request is sent, and an unknown action is
@@ -155,6 +142,24 @@ form the human sees, the write and its verification, a blocked delete, and the a
   decides what to write; the server decides whether it may.
 - **Generator is not approver.** The model can propose and apply, but approval comes from a channel it cannot
   speak on (an elicitation form, or a person typing in a terminal).
+
+## Data
+
+The demo and the tests use an in-memory fake AnkiConnect seeded with a few fictitious notes (macroeconomics
+flashcards and one "private" card the server must not touch). Nothing reads or writes a real collection.
+
+## Limits
+
+- No media (images, audio) on cards yet.
+- "Similar" is lexical (keyword search + text similarity), not semantic.
+- Tested against a fake AnkiConnect that follows the protocol; try it first on a test deck of your own.
+- Elicitation (the approval form) depends on the MCP client; without it the approval moves to the terminal.
+- Built on the MCP Python SDK 2.x (`mcp>=2.3,<3`).
+
+## How AI was used
+
+I use Claude (Claude Code and the API) for coding, review and documentation. The questions, modelling choices,
+validation and conclusions are mine.
 
 ## License
 

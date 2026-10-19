@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 300" width="980" height="300" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">anki-librarian-mcp write flow</title>
+  <desc id="d">The model proposes a write; the server searches the collection and checks tags, cloze syntax and decks, and returns a dry-run plan; the human approves through the MCP client or a terminal; the server writes through AnkiConnect and reads the result back; every step goes to the audit log.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#4a5568"/>
+    </marker>
+    <style>
+      .bg{fill:#ffffff}.h{font-size:13px;font-weight:700;fill:#1a202c}.s{font-size:11px;fill:#4a5568}
+      .box{fill:#f7fafc;stroke:#a0aec0;stroke-width:1.2}.model{fill:#ebf4ff;stroke:#5a67d8;stroke-width:1.4}
+      .guard{fill:#fffaf0;stroke:#dd6b20;stroke-width:1.4}.human{fill:#f0fff4;stroke:#38a169;stroke-width:1.4}
+      .data{fill:#edf2f7;stroke:#4a5568;stroke-width:1.2}.watch{fill:#faf5ff;stroke:#805ad5;stroke-width:1.2}
+      .ln{stroke:#4a5568;stroke-width:1.3;fill:none}.dash{stroke:#805ad5;stroke-width:1.1;fill:none;stroke-dasharray:4 3}
+      @media (prefers-color-scheme: dark){
+        .bg{fill:#171923}.h{fill:#e2e8f0}.s{fill:#a0aec0}.box{fill:#1f2533;stroke:#4a5568}
+        .model{fill:#1e2547;stroke:#7f9cf5}.guard{fill:#2d2316;stroke:#ed8936}.human{fill:#18291f;stroke:#48bb78}
+        .data{fill:#2d3748;stroke:#a0aec0}.watch{fill:#251d36;stroke:#9f7aea}.ln{stroke:#a0aec0}
+      }
+    </style>
+  </defs>
+  <rect class="bg" width="980" height="300" rx="12"/>
+
+  <rect class="model" x="20" y="40" width="150" height="86" rx="8"/>
+  <text class="h" x="34" y="64">Model</text>
+  <text class="s" x="34" y="84">propose_add_notes</text>
+  <text class="s" x="34" y="100">propose_update_note</text>
+  <text class="s" x="34" y="116">... then apply_plan</text>
+  <path class="ln" d="M170 83H198" marker-end="url(#a)"/>
+
+  <rect class="guard" x="200" y="40" width="200" height="86" rx="8"/>
+  <text class="h" x="214" y="64">Reconcile and check</text>
+  <text class="s" x="214" y="84">search the collection first</text>
+  <text class="s" x="214" y="100">tags vs taxonomy, cloze syntax</text>
+  <text class="s" x="214" y="116">only writable decks</text>
+  <path class="ln" d="M400 83H428" marker-end="url(#a)"/>
+
+  <rect class="box" x="430" y="40" width="160" height="86" rx="8"/>
+  <text class="h" x="444" y="64">Plan (dry run)</text>
+  <text class="s" x="444" y="84">to add / skipped</text>
+  <text class="s" x="444" y="100">similar / errors</text>
+  <text class="s" x="444" y="116">expires in 15 min</text>
+  <path class="ln" d="M590 83H618" marker-end="url(#a)"/>
+
+  <rect class="human" x="620" y="40" width="170" height="86" rx="8"/>
+  <text class="h" x="634" y="64">Human approves</text>
+  <text class="s" x="634" y="84">MCP elicitation form, or</text>
+  <text class="s" x="634" y="100">terminal: approve &lt;plan&gt;</text>
+  <text class="s" x="634" y="116">(the model cannot)</text>
+  <path class="ln" d="M790 83H818" marker-end="url(#a)"/>
+
+  <rect class="data" x="820" y="40" width="140" height="86" rx="8"/>
+  <text class="h" x="834" y="64">Write to Anki</text>
+  <text class="s" x="834" y="84">via AnkiConnect,</text>
+  <text class="s" x="834" y="100">then read back and</text>
+  <text class="s" x="834" y="116">compare with the plan</text>
+
+  <rect class="guard" x="20" y="148" width="380" height="76" rx="8"/>
+  <text class="h" x="34" y="170">Action lock (checked before any request leaves)</text>
+  <text class="s" x="34" y="190">forbidden: sync, reset, answer cards, delete decks</text>
+  <text class="s" x="34" y="206">off by default: delete notes, reschedule · unknown actions: blocked</text>
+
+  <rect class="watch" x="20" y="240" width="940" height="40" rx="8"/>
+  <text class="s" x="36" y="265"><tspan class="h" font-size="12">Audit log:</tspan> proposed · approved · rejected · applied · failed · blocked, one JSON line each</text>
+  <path class="dash" d="M510 126V238M705 126V238M890 126V238M210 224V238"/>
+</svg>

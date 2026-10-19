@@ -3,6 +3,7 @@
 No test ever talks to a real Anki. The fake keeps a log of every action it received, so a test can prove that
 a blocked action never left the server.
 """
+
 from __future__ import annotations
 
 import fnmatch
@@ -33,8 +34,14 @@ class FakeAnki:
         self.decks.add(deck)
         nid = next(self._ids)
         names = MODELS[model]
-        self.notes[nid] = {"noteId": nid, "modelName": model, "tags": list(tags), "mod": 1,
-                           "fields": {names[0]: front, names[1]: back}, "cards": []}
+        self.notes[nid] = {
+            "noteId": nid,
+            "modelName": model,
+            "tags": list(tags),
+            "mod": 1,
+            "fields": {names[0]: front, names[1]: back},
+            "cards": [],
+        }
         cid = next(self._ids)
         self.cards[cid] = {"cardId": cid, "note": nid, "deckName": deck, "flags": flags, "due": 0}
         self.notes[nid]["cards"].append(cid)
@@ -51,7 +58,7 @@ class FakeAnki:
             return {"result": getattr(self, "a_" + action)(**params), "error": None}
         except AttributeError:
             return {"result": None, "error": f"unsupported action {action}"}
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             return {"result": None, "error": str(e)}
 
     __call__ = handle
@@ -97,9 +104,16 @@ class FakeAnki:
                 out.append({})
                 continue
             names = MODELS[n["modelName"]]
-            out.append({"noteId": nid, "modelName": n["modelName"], "tags": list(n["tags"]), "mod": n["mod"],
-                        "cards": list(n["cards"]),
-                        "fields": {k: {"value": n["fields"][k], "order": names.index(k)} for k in names}})
+            out.append(
+                {
+                    "noteId": nid,
+                    "modelName": n["modelName"],
+                    "tags": list(n["tags"]),
+                    "mod": n["mod"],
+                    "cards": list(n["cards"]),
+                    "fields": {k: {"value": n["fields"][k], "order": names.index(k)} for k in names},
+                }
+            )
         return out
 
     def a_cardsInfo(self, cards):
@@ -111,13 +125,22 @@ class FakeAnki:
             if n["deckName"] not in self.decks:
                 raise ValueError(f"deck was not found: {n['deckName']}")
             first = MODELS[n["modelName"]][0]
-            dup = any(_plain(x["fields"][MODELS[x["modelName"]][0]]) == _plain(n["fields"][first])
-                      for x in self.notes.values() if x["modelName"] == n["modelName"])
+            dup = any(
+                _plain(x["fields"][MODELS[x["modelName"]][0]]) == _plain(n["fields"][first])
+                for x in self.notes.values()
+                if x["modelName"] == n["modelName"]
+            )
             if dup and not n.get("options", {}).get("allowDuplicate"):
                 ids.append(None)
                 continue
-            ids.append(self.seed(n["deckName"], *[n["fields"][k] for k in MODELS[n["modelName"]]],
-                                 tags=n.get("tags", []), model=n["modelName"]))
+            ids.append(
+                self.seed(
+                    n["deckName"],
+                    *[n["fields"][k] for k in MODELS[n["modelName"]]],
+                    tags=n.get("tags", []),
+                    model=n["modelName"],
+                )
+            )
         return ids
 
     def a_updateNoteFields(self, note):
@@ -142,7 +165,7 @@ class FakeAnki:
         return [True for _ in cards]
 
     def a_setSpecificValueOfCard(self, card, keys, newValues):
-        for k, v in zip(keys, newValues):
+        for k, v in zip(keys, newValues, strict=False):
             self.cards[card][k] = v
         return [True]
 
@@ -160,7 +183,7 @@ class FakeAnkiHTTP:
         fake_ref = fake
 
         class Handler(BaseHTTPRequestHandler):
-            def do_POST(self):  # noqa: N802
+            def do_POST(self):
                 body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
                 out = json.dumps(fake_ref.handle(body)).encode()
                 self.send_response(200)

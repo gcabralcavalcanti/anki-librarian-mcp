@@ -1,4 +1,5 @@
 """Command line: run the server, and the human's side of the approval (approve / reject / plans / audit)."""
+
 from __future__ import annotations
 
 import argparse
@@ -51,13 +52,22 @@ def main(argv=None) -> int:
     try:
         if a.cmd in (None, "serve"):
             from .server import build_server
+
             build_server(lib).run("stdio")
             return 0
         if a.cmd == "check":
-            _print({"anki_url": settings.anki_url, "writable_decks": settings.writable_decks,
-                    "allow_delete": settings.allow_delete, "allow_reschedule": settings.allow_reschedule,
-                    "approval": settings.approval, "state_dir": str(settings.state_dir),
-                    "taxonomy_roots": settings.taxonomy.roots, "ankiconnect_version": lib.anki.call("version")})
+            _print(
+                {
+                    "anki_url": settings.anki_url,
+                    "writable_decks": settings.writable_decks,
+                    "allow_delete": settings.allow_delete,
+                    "allow_reschedule": settings.allow_reschedule,
+                    "approval": settings.approval,
+                    "state_dir": str(settings.state_dir),
+                    "taxonomy_roots": settings.taxonomy.roots,
+                    "ankiconnect_version": lib.anki.call("version"),
+                }
+            )
         elif a.cmd == "plans":
             _print([lib.view(p) for p in lib.plans.list(a.status)])
         elif a.cmd == "show":

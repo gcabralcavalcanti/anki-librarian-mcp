@@ -1,4 +1,5 @@
 """Pure checks used before a plan is shown: tag taxonomy, cloze syntax, text normalization, similarity."""
+
 from __future__ import annotations
 
 import difflib
@@ -38,8 +39,11 @@ def tag_errors(tags: list[str], tax: Taxonomy) -> list[str]:
         parts = tag.split("::")
         root = parts[0]
         if root not in tax.roots + tax.operational:
-            hint = f" (did you mean {allowed[root.lower()]}?)" if root.lower() in allowed else \
-                f" (allowed roots: {', '.join(tax.roots)})"
+            hint = (
+                f" (did you mean {allowed[root.lower()]}?)"
+                if root.lower() in allowed
+                else f" (allowed roots: {', '.join(tax.roots)})"
+            )
             errors.append(f"tag '{tag}': unknown root '{root}'{hint}")
             continue
         if len(parts) > tax.max_depth:

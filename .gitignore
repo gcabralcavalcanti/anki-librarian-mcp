@@ -7,3 +7,4 @@ dist/
 .anki-librarian/
 anki-librarian.toml
 .venv/
+.ruff_cache/

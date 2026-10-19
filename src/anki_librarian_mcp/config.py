@@ -1,4 +1,5 @@
 """Settings, read from a TOML file (see anki-librarian.example.toml). Every default is the safe one."""
+
 from __future__ import annotations
 
 import fnmatch
@@ -10,11 +11,11 @@ from pathlib import Path
 
 @dataclass
 class Taxonomy:
-    roots: list[str] = field(default_factory=list)          # empty = no taxonomy check
-    operational: list[str] = field(default_factory=list)    # extra allowed roots (e.g. TEMP, Radar)
+    roots: list[str] = field(default_factory=list)  # empty = no taxonomy check
+    operational: list[str] = field(default_factory=list)  # extra allowed roots (e.g. TEMP, Radar)
     segment_pattern: str = r"^[A-Z0-9][A-Za-z0-9.&'-]*$"
     max_depth: int = 6
-    required: bool = True                                    # every note needs at least one taxonomy tag
+    required: bool = True  # every note needs at least one taxonomy tag
 
 
 @dataclass
@@ -24,7 +25,7 @@ class Settings:
     writable_decks: list[str] = field(default_factory=list)  # glob patterns; empty = nothing is writable
     allow_delete: bool = False
     allow_reschedule: bool = False
-    approval: str = "elicit"          # elicit (ask the human through the MCP client) | cli | none (tests only)
+    approval: str = "elicit"  # elicit (ask the human through the MCP client) | cli | none (tests only)
     max_notes_per_plan: int = 50
     plan_ttl_minutes: int = 15
     similar_threshold: float = 0.85

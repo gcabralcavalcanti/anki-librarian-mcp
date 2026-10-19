@@ -1,10 +1,11 @@
 """The action lock and the transport: blocked actions never leave the process; reads retry, writes do not."""
+
 import urllib.error
 
 import pytest
+from fake_anki import FakeAnkiHTTP
 
 from anki_librarian_mcp.connect import AnkiConnect, AnkiError, Blocked
-from fake_anki import FakeAnkiHTTP
 
 
 def client(fake, **kw):
@@ -22,8 +23,19 @@ def test_write_needs_ok(fake):
     assert a.call("createDeck", {"deck": "Inbox::New"}, ok=True) == 1
 
 
-@pytest.mark.parametrize("action", ["deleteDecks", "sync", "forgetCards", "answerCards", "setEaseFactors",
-                                    "importPackage", "clearUnusedTags", "replaceTagsInAllNotes"])
+@pytest.mark.parametrize(
+    "action",
+    [
+        "deleteDecks",
+        "sync",
+        "forgetCards",
+        "answerCards",
+        "setEaseFactors",
+        "importPackage",
+        "clearUnusedTags",
+        "replaceTagsInAllNotes",
+    ],
+)
 def test_forbidden_even_with_ok_and_never_sent(fake, action):
     with pytest.raises(Blocked):
         client(fake).call(action, {}, ok=True)
@@ -67,6 +79,7 @@ def test_reads_retry_with_backoff_then_succeed(fake):
         if calls["n"] < 3:
             raise urllib.error.URLError("connection refused")
         return fake(payload)
+
     a = AnkiConnect(transport=flaky, sleep=delays.append)
     assert a.call("version") == 6
     assert len(delays) == 2 and delays[1] > delays[0]
@@ -78,6 +91,7 @@ def test_writes_are_never_retried(fake):
     def down(payload):
         calls["n"] += 1
         raise TimeoutError("timed out")
+
     with pytest.raises(AnkiError):
         AnkiConnect(transport=down, sleep=lambda s: None).call("createDeck", {"deck": "Inbox::X"}, ok=True)
     assert calls["n"] == 1
@@ -85,8 +99,11 @@ def test_writes_are_never_retried(fake):
 
 def test_ankiconnect_error_is_raised(fake):
     with pytest.raises(AnkiError, match="deck was not found"):
-        client(fake).call("addNotes", {"notes": [{"deckName": "Nope", "modelName": "Basic",
-                                                  "fields": {"Front": "a", "Back": "b"}}]}, ok=True)
+        client(fake).call(
+            "addNotes",
+            {"notes": [{"deckName": "Nope", "modelName": "Basic", "fields": {"Front": "a", "Back": "b"}}]},
+            ok=True,
+        )
 
 
 def test_real_http_transport_against_fake_server(fake):

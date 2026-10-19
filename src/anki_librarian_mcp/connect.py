@@ -1,37 +1,65 @@
-"""connect.py - the only door to AnkiConnect, with the Librarian's action lock.
+"""AnkiConnect client with the action lock. Every action is classified before a request is sent:
 
-AnkiConnect is a local add-on that exposes the Anki desktop app as a JSON API (default 127.0.0.1:8765).
-Every action is classified BEFORE a request leaves this process:
-
-  READ        always allowed
-  WRITE       only with ok=True, which the service passes only when applying an approved plan
-  SWITCHED    deleting and rescheduling: forbidden unless switched on in the config, then like WRITE
-  FORBIDDEN   never (sync, package import, answering or resetting cards, deleting decks, mass tag rewrites)
-  CONDITIONAL setSpecificValueOfCard, only for the `flags` key, only through the flag routine
-  unknown     blocked: a new action must be added to a list on purpose (allowlist, not denylist)
-
-Reads are retried with exponential backoff (Anki may be starting up); writes are never retried, so a
-timeout can never turn into a duplicate write.
-
-Base: the Anki client of the Librarian agent (personal-ai-agents), moved here as the single home of the code.
+read: always allowed · write: only when an approved plan is applied · delete / reschedule: off unless switched
+on in the config · forbidden: never · setSpecificValueOfCard: only the flags key · unknown: blocked.
+Reads are retried with backoff; writes are never retried, so a timeout cannot become a duplicate write.
 """
+
 from __future__ import annotations
 
 import json
 import time
 import urllib.error
 import urllib.request
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
-READ = {"version", "deckNames", "deckNamesAndIds", "getTags", "findNotes", "findCards", "notesInfo", "cardsInfo",
-        "modelNames", "modelFieldNames", "getDeckStats", "areSuspended", "getNumCardsReviewedToday",
-        "canAddNotes", "canAddNotesWithErrorDetail", "getDeckConfig"}
-WRITE = {"addNotes", "updateNoteFields", "updateNoteTags", "addTags", "removeTags", "changeDeck",
-         "suspend", "unsuspend", "createDeck"}
+READ = {
+    "version",
+    "deckNames",
+    "deckNamesAndIds",
+    "getTags",
+    "findNotes",
+    "findCards",
+    "notesInfo",
+    "cardsInfo",
+    "modelNames",
+    "modelFieldNames",
+    "getDeckStats",
+    "areSuspended",
+    "getNumCardsReviewedToday",
+    "canAddNotes",
+    "canAddNotesWithErrorDetail",
+    "getDeckConfig",
+}
+WRITE = {
+    "addNotes",
+    "updateNoteFields",
+    "updateNoteTags",
+    "addTags",
+    "removeTags",
+    "changeDeck",
+    "suspend",
+    "unsuspend",
+    "createDeck",
+}
 SWITCHED = {"deleteNotes": "allow_delete", "setDueDate": "allow_reschedule"}
-FORBIDDEN = {"deleteDecks", "removeEmptyNotes", "clearUnusedTags", "replaceTagsInAllNotes", "forgetCards",
-             "relearnCards", "answerCards", "setEaseFactors", "importPackage", "sync", "updateModelTemplates",
-             "storeMediaFile", "deleteMediaFile", "guiExitAnki"}
+FORBIDDEN = {
+    "deleteDecks",
+    "removeEmptyNotes",
+    "clearUnusedTags",
+    "replaceTagsInAllNotes",
+    "forgetCards",
+    "relearnCards",
+    "answerCards",
+    "setEaseFactors",
+    "importPackage",
+    "sync",
+    "updateModelTemplates",
+    "storeMediaFile",
+    "deleteMediaFile",
+    "guiExitAnki",
+}
 CONDITIONAL = {"setSpecificValueOfCard"}
 
 
@@ -49,13 +77,22 @@ def http_transport(url: str, timeout: float) -> Callable[[dict], dict]:
         req = urllib.request.Request(url, body, headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.loads(r.read().decode("utf-8"))
+
     return send
 
 
 class AnkiConnect:
-    def __init__(self, url: str = "http://127.0.0.1:8765", *, timeout: float = 10.0, read_retries: int = 3,
-                 backoff_s: float = 0.5, switches: dict[str, bool] | None = None,
-                 transport: Callable[[dict], dict] | None = None, sleep: Callable[[float], None] = time.sleep):
+    def __init__(
+        self,
+        url: str = "http://127.0.0.1:8765",
+        *,
+        timeout: float = 10.0,
+        read_retries: int = 3,
+        backoff_s: float = 0.5,
+        switches: dict[str, bool] | None = None,
+        transport: Callable[[dict], dict] | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+    ):
         self.send = transport or http_transport(url, timeout)
         self.read_retries = read_retries
         self.backoff_s = backoff_s
@@ -67,8 +104,10 @@ class AnkiConnect:
         if action in FORBIDDEN:
             raise Blocked(f"BLOCKED: {action} is forbidden for the agent (the human does it in Anki).")
         if action in SWITCHED and not self.switches.get(SWITCHED[action]):
-            raise Blocked(f"BLOCKED: {action} is off. Turning it on is the human's decision "
-                          f"({SWITCHED[action]} = true in the config).")
+            raise Blocked(
+                f"BLOCKED: {action} is off. Turning it on is the human's decision "
+                f"({SWITCHED[action]} = true in the config)."
+            )
         if action in CONDITIONAL and field != "flags":
             raise Blocked(f"BLOCKED: {action} only passes for the 'flags' key, through the flag routine.")
         if action not in READ | WRITE | set(SWITCHED) | CONDITIONAL:
@@ -88,7 +127,7 @@ class AnkiConnect:
             except (urllib.error.URLError, ConnectionError, TimeoutError, OSError) as e:
                 if attempt == attempts - 1:
                     raise AnkiError(f"AnkiConnect unreachable ({action}): {e}. Is Anki open with AnkiConnect?") from e
-                self.sleep(self.backoff_s * 2 ** attempt)
+                self.sleep(self.backoff_s * 2**attempt)
         if resp.get("error"):
             raise AnkiError(f"AnkiConnect error in {action}: {resp['error']}")
         return resp["result"]

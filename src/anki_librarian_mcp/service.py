@@ -1,14 +1,11 @@
-"""service.py - the Librarian: every tool's logic, independent of MCP (so it is testable on its own).
-
-Writes never happen in one step. Each write tool builds a **plan** (a dry run): what would change, which
-notes were skipped as duplicates of notes already in the collection, which look similar, which tags break the
-taxonomy, which notes sit outside the writable decks. Nothing is written until the plan is **approved by the
-human** and then **applied**; after applying, every change is read back and compared with the plan.
+"""Tool logic, independent of MCP. Every write is a plan first (reconciled with the collection, tags and decks
+checked), applied only after the human approves, and read back afterwards.
 """
+
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from . import checks
 from .config import Settings
@@ -29,17 +26,22 @@ def _excerpt(text: str, n: int = 90) -> str:
 class Librarian:
     def __init__(self, settings: Settings, anki: AnkiConnect | None = None):
         self.s = settings
-        self.anki = anki or AnkiConnect(settings.anki_url, timeout=settings.timeout_s,
-                                        switches={"allow_delete": settings.allow_delete,
-                                                  "allow_reschedule": settings.allow_reschedule})
+        self.anki = anki or AnkiConnect(
+            settings.anki_url,
+            timeout=settings.timeout_s,
+            switches={"allow_delete": settings.allow_delete, "allow_reschedule": settings.allow_reschedule},
+        )
         self.plans = PlanStore(settings.state_dir, settings.plan_ttl_minutes)
         self.audit = Audit(settings.state_dir)
 
     # ================================================================== reads (always free)
     def list_decks(self) -> dict:
         decks = sorted(self.anki.call("deckNames"))
-        return {"decks": decks, "writable": [d for d in decks if self.s.deck_writable(d)],
-                "writable_patterns": self.s.writable_decks}
+        return {
+            "decks": decks,
+            "writable": [d for d in decks if self.s.deck_writable(d)],
+            "writable_patterns": self.s.writable_decks,
+        }
 
     def find_notes(self, query: str, limit: int = 20) -> dict:
         ids = self.anki.call("findNotes", {"query": query})
@@ -54,20 +56,27 @@ class Librarian:
             return []
         info = self.anki.call("notesInfo", {"notes": ids})
         card_ids = [c for n in info for c in n.get("cards", [])]
-        decks = {c["cardId"]: c["deckName"] for c in self.anki.call("cardsInfo", {"cards": card_ids})} if card_ids else {}
+        decks = (
+            {c["cardId"]: c["deckName"] for c in self.anki.call("cardsInfo", {"cards": card_ids})} if card_ids else {}
+        )
         out = []
         for n in info:
             fields = {k: v["value"] for k, v in sorted(n["fields"].items(), key=lambda kv: kv[1]["order"])}
-            out.append({"note_id": n["noteId"], "model": n["modelName"], "tags": n["tags"],
-                        "decks": sorted({decks[c] for c in n.get("cards", []) if c in decks}),
-                        "fields": fields if full else {k: _excerpt(v) for k, v in fields.items()}})
+            out.append(
+                {
+                    "note_id": n["noteId"],
+                    "model": n["modelName"],
+                    "tags": n["tags"],
+                    "decks": sorted({decks[c] for c in n.get("cards", []) if c in decks}),
+                    "fields": fields if full else {k: _excerpt(v) for k, v in fields.items()},
+                }
+            )
         return out
 
     # ================================================================== proposals (dry runs)
     def propose_add_notes(self, deck: str, notes: list[dict]) -> dict:
         """notes: [{front, back, tags?}] -> plan with duplicates removed and similar notes flagged."""
-        rows = [{"fields": {"Front": n["front"], "Back": n.get("back", "")}, "tags": n.get("tags", [])}
-                for n in notes]
+        rows = [{"fields": {"Front": n["front"], "Back": n.get("back", "")}, "tags": n.get("tags", [])} for n in notes]
         return self._propose_add("add_notes", deck, self.s.basic_model, rows, [])
 
     def propose_add_cloze_notes(self, deck: str, notes: list[dict]) -> dict:
@@ -75,8 +84,9 @@ class Librarian:
         rows, errors = [], []
         for i, n in enumerate(notes):
             errors += [f"note {i + 1}: {e}" for e in checks.cloze_errors(n["text"])]
-            rows.append({"fields": {"Text": n["text"], "Back Extra": n.get("back_extra", "")},
-                         "tags": n.get("tags", [])})
+            rows.append(
+                {"fields": {"Text": n["text"], "Back Extra": n.get("back_extra", "")}, "tags": n.get("tags", [])}
+            )
         return self._propose_add("add_cloze_notes", deck, self.s.cloze_model, rows, errors)
 
     def _propose_add(self, kind: str, deck: str, model: str, rows: list[dict], errors: list[str]) -> dict:
@@ -94,7 +104,9 @@ class Librarian:
             front, back = r["fields"][first], list(r["fields"].values())[1]
             key = checks.normalize(front)
             if key in seen:
-                duplicates.append({"note": i + 1, "front": _excerpt(front), "duplicate_of": f"note {seen[key]} in this batch"})
+                duplicates.append(
+                    {"note": i + 1, "front": _excerpt(front), "duplicate_of": f"note {seen[key]} in this batch"}
+                )
                 continue
             seen[key] = i + 1
             match = self._reconcile(front, back)
@@ -102,23 +114,50 @@ class Librarian:
                 duplicates.append({"note": i + 1, "front": _excerpt(front), "duplicate_of": match["note_id"]})
                 continue
             if match["kind"] == "conflict":
-                conflicts.append({"note": i + 1, "front": _excerpt(front), "existing": match["note_id"],
-                                  "why": "same front, different back: decide by hand which one stays"})
+                conflicts.append(
+                    {
+                        "note": i + 1,
+                        "front": _excerpt(front),
+                        "existing": match["note_id"],
+                        "why": "same front, different back: decide by hand which one stays",
+                    }
+                )
                 continue
             if match["kind"] == "similar":
-                similar.append({"note": i + 1, "front": _excerpt(front), "similar_to": match["note_id"],
-                                "existing_front": match["front"], "score": match["score"]})
-            to_add.append({"deckName": deck, "modelName": model, "fields": r["fields"], "tags": r["tags"],
-                           "options": {"allowDuplicate": False}})
+                similar.append(
+                    {
+                        "note": i + 1,
+                        "front": _excerpt(front),
+                        "similar_to": match["note_id"],
+                        "existing_front": match["front"],
+                        "score": match["score"],
+                    }
+                )
+            to_add.append(
+                {
+                    "deckName": deck,
+                    "modelName": model,
+                    "fields": r["fields"],
+                    "tags": r["tags"],
+                    "options": {"allowDuplicate": False},
+                }
+            )
         steps = []
         deck_exists = deck in self.anki.call("deckNames")
         if to_add and not deck_exists:
             steps.append({"action": "createDeck", "params": {"deck": deck}})
         if to_add:
             steps.append({"action": "addNotes", "params": {"notes": to_add}})
-        preview = {"deck": deck, "deck_exists": deck_exists, "model": model, "to_add": len(to_add),
-                   "fronts": [_excerpt(n["fields"][first]) for n in to_add],
-                   "skipped_duplicates": duplicates, "skipped_conflicts": conflicts, "similar_flagged": similar}
+        preview = {
+            "deck": deck,
+            "deck_exists": deck_exists,
+            "model": model,
+            "to_add": len(to_add),
+            "fronts": [_excerpt(n["fields"][first]) for n in to_add],
+            "skipped_duplicates": duplicates,
+            "skipped_conflicts": conflicts,
+            "similar_flagged": similar,
+        }
         if not to_add and not errors:
             errors.append("nothing to add: every note already exists")
         return self._new_plan(kind, steps, preview, errors)
@@ -127,7 +166,7 @@ class Librarian:
         """Search the collection BEFORE creating: exact duplicate, conflict, similar, or new."""
         words = checks.keywords(front, 3) or checks.normalize(front).split()[:3]
         ids: list[int] = []
-        for w in words:   # one search per keyword, union: a reworded front still finds its neighbour
+        for w in words:  # one search per keyword, union: a reworded front still finds its neighbour
             ids += [i for i in self.anki.call("findNotes", {"query": f"w:{w.replace('_', '')}"}) if i not in ids]
         ids = ids[:50]
         best = {"kind": "new", "score": 0.0}
@@ -156,7 +195,9 @@ class Librarian:
         steps, diff = [], {}
         if fields:
             changed = {k: v for k, v in fields.items() if k in current and v != current[k]}
-            diff["fields"] = {k: {"before": _excerpt(current[k], 200), "after": _excerpt(v, 200)} for k, v in changed.items()}
+            diff["fields"] = {
+                k: {"before": _excerpt(current[k], 200), "after": _excerpt(v, 200)} for k, v in changed.items()
+            }
             if changed:
                 steps.append({"action": "updateNoteFields", "params": {"note": {"id": note_id, "fields": changed}}})
         if tags is not None:
@@ -173,30 +214,45 @@ class Librarian:
         errors = [] if self.s.deck_writable(name) else [f"deck '{name}' is outside the writable decks"]
         if name in self.anki.call("deckNames"):
             errors.append(f"deck '{name}' already exists")
-        return self._new_plan("create_deck", [{"action": "createDeck", "params": {"deck": name}}],
-                              {"deck": name}, errors)
+        return self._new_plan(
+            "create_deck", [{"action": "createDeck", "params": {"deck": name}}], {"deck": name}, errors
+        )
 
     def propose_delete_notes(self, note_ids: list[int]) -> dict:
-        self.anki.check("deleteNotes", ok=True)   # switch first: no preview of a forbidden action
+        self.anki.check("deleteNotes", ok=True)  # switch first: no preview of a forbidden action
         if len(note_ids) > 50:
             raise PlanError("at most 50 notes per delete plan; there is no delete-by-query")
         info = [n for n in self.anki.call("notesInfo", {"notes": note_ids}) if n]
         found = {n["noteId"] for n in info}
         errors = self._scope_errors([c for n in info for c in n.get("cards", [])])
         missing = [i for i in note_ids if i not in found]
-        preview = {"delete": [{"note_id": n["noteId"], "front": _excerpt(next(iter(
-            sorted(n["fields"].values(), key=lambda v: v["order"])))["value"])} for n in info],
-                   "not_found": missing,
-                   "warning": "deleting a note deletes its cards and their review history; this cannot be undone"}
+        preview = {
+            "delete": [
+                {
+                    "note_id": n["noteId"],
+                    "front": _excerpt(next(iter(sorted(n["fields"].values(), key=lambda v: v["order"])))["value"]),
+                }
+                for n in info
+            ],
+            "not_found": missing,
+            "warning": "deleting a note deletes its cards and their review history; this cannot be undone",
+        }
         steps = [{"action": "deleteNotes", "params": {"notes": sorted(found)}}] if found else []
         return self._new_plan("delete_notes", steps, preview, errors or ([] if found else ["no note found"]))
 
     def propose_set_due_date(self, card_ids: list[int], days: str) -> dict:
         self.anki.check("setDueDate", ok=True)
         errors = self._scope_errors(card_ids)
-        return self._new_plan("set_due_date", [{"action": "setDueDate", "params": {"cards": card_ids, "days": days}}],
-                              {"cards": card_ids, "days": days,
-                               "warning": "rescheduling changes the review history the scheduler learns from"}, errors)
+        return self._new_plan(
+            "set_due_date",
+            [{"action": "setDueDate", "params": {"cards": card_ids, "days": days}}],
+            {
+                "cards": card_ids,
+                "days": days,
+                "warning": "rescheduling changes the review history the scheduler learns from",
+            },
+            errors,
+        )
 
     def propose_flag_cards(self, card_ids: list[int], color: int) -> dict:
         """Flag only with the agent's colors; a card already carrying a human flag is skipped."""
@@ -207,30 +263,51 @@ class Librarian:
             raise Blocked("BLOCKED: cardsInfo has no 'flags' field - cannot prove the human's flag stays intact.")
         target = [c["cardId"] for c in info if c["flags"] in self.s.agent_flags]
         skipped = [c["cardId"] for c in info if c["flags"] not in self.s.agent_flags]
-        steps = [{"action": "setSpecificValueOfCard", "params": {"card": c, "keys": ["flags"], "newValues": [color]}}
-                 for c in target]
-        return self._new_plan("flag_cards", steps, {"color": color, "flag": target, "skipped_human_flag": skipped},
-                              self._scope_errors(target) or ([] if target else ["no card can be flagged"]))
+        steps = [
+            {"action": "setSpecificValueOfCard", "params": {"card": c, "keys": ["flags"], "newValues": [color]}}
+            for c in target
+        ]
+        return self._new_plan(
+            "flag_cards",
+            steps,
+            {"color": color, "flag": target, "skipped_human_flag": skipped},
+            self._scope_errors(target) or ([] if target else ["no card can be flagged"]),
+        )
 
     def _scope_errors(self, card_ids: list[int]) -> list[str]:
         if not card_ids:
             return []
-        outside = sorted({c["deckName"] for c in self.anki.call("cardsInfo", {"cards": card_ids})
-                          if not self.s.deck_writable(c["deckName"])})
+        outside = sorted(
+            {
+                c["deckName"]
+                for c in self.anki.call("cardsInfo", {"cards": card_ids})
+                if not self.s.deck_writable(c["deckName"])
+            }
+        )
         return [f"cards in deck(s) outside the writable decks: {outside}"] if outside else []
 
     def _new_plan(self, kind: str, steps: list[dict], preview: dict, errors: list[str]) -> dict:
         plan = self.plans.create(kind, steps, preview, errors)
-        self.audit.log("proposed", plan=plan["id"], kind=kind, status=plan["status"], errors=errors,
-                       steps=[s["action"] for s in steps])
+        self.audit.log(
+            "proposed",
+            plan=plan["id"],
+            kind=kind,
+            status=plan["status"],
+            errors=errors,
+            steps=[s["action"] for s in steps],
+        )
         return self.view(plan)
 
     # ================================================================== approval and application
     def view(self, plan: dict) -> dict:
-        nxt = {"invalid": "fix the errors and propose again; an invalid plan cannot be approved",
-               "pending": "show this preview to the human, then call apply_plan; the human approves it",
-               "approved": "call apply_plan", "applied": "done", "rejected": "rejected by the human",
-               "expired": f"older than {self.s.plan_ttl_minutes} minutes; propose again"}[plan["status"]]
+        nxt = {
+            "invalid": "fix the errors and propose again; an invalid plan cannot be approved",
+            "pending": "show this preview to the human, then call apply_plan; the human approves it",
+            "approved": "call apply_plan",
+            "applied": "done",
+            "rejected": "rejected by the human",
+            "expired": f"older than {self.s.plan_ttl_minutes} minutes; propose again",
+        }[plan["status"]]
         return {k: plan[k] for k in ("id", "kind", "status", "expires", "errors", "preview")} | {"next": nxt}
 
     def get_plan(self, pid: str) -> dict:
@@ -244,8 +321,11 @@ class Librarian:
         if plan["status"] != "pending":
             raise PlanError(f"plan {pid} is {plan['status']}, only a pending plan can be approved")
         self.audit.log("approved", plan=pid, via=via)
-        return self.view(self.plans.set_status(pid, "approved", approved_via=via,
-                                               approved_at=datetime.now(timezone.utc).isoformat(timespec="seconds")))
+        return self.view(
+            self.plans.set_status(
+                pid, "approved", approved_via=via, approved_at=datetime.now(UTC).isoformat(timespec="seconds")
+            )
+        )
 
     def reject(self, pid: str, via: str, reason: str = "") -> dict:
         plan = self.get_plan(pid)
@@ -259,15 +339,19 @@ class Librarian:
         if plan["status"] == "pending" and self.s.approval == "none":
             plan = self.get_plan(self.approve(pid, via="config: approval = none")["id"])
         if plan["status"] != "approved":
-            raise PlanError(f"plan {pid} is {plan['status']}: only an approved plan is applied "
-                            f"(the human approves it: anki-librarian-mcp approve {pid})")
-        if plan["kind"] == "update_note":     # stale-write protection
+            raise PlanError(
+                f"plan {pid} is {plan['status']}: only an approved plan is applied "
+                f"(the human approves it: anki-librarian-mcp approve {pid})"
+            )
+        if plan["kind"] == "update_note":  # stale-write protection
             note = self.anki.call("notesInfo", {"notes": [plan["preview"]["note_id"]]})[0]
             if note.get("mod") != plan["preview"]["mod_at_preview"]:
                 self.plans.set_status(pid, "expired")
                 self.audit.log("failed", plan=pid, error="note changed after the preview")
-                raise PlanError("the note changed after the preview; propose again so the human sees the current version")
-        if plan["kind"] == "flag_cards":      # a human flag set after the preview wins
+                raise PlanError(
+                    "the note changed after the preview; propose again so the human sees the current version"
+                )
+        if plan["kind"] == "flag_cards":  # a human flag set after the preview wins
             cards = [st["params"]["card"] for st in plan["steps"]]
             now = {c["cardId"]: c["flags"] for c in self.anki.call("cardsInfo", {"cards": cards})} if cards else {}
             plan["steps"] = [st for st in plan["steps"] if now.get(st["params"]["card"]) in self.s.agent_flags]
@@ -276,7 +360,7 @@ class Librarian:
         try:
             for step in plan["steps"]:
                 results.append(self.anki.call(step["action"], step["params"], ok=True))
-        except Exception as e:  # noqa: BLE001 - record and re-raise: a half-applied plan must be visible
+        except Exception as e:
             self.audit.log("failed", plan=pid, step=len(results), error=str(e)[:300])
             self.plans.set_status(pid, "failed", error=str(e)[:300], partial_results=results)
             raise
@@ -289,22 +373,32 @@ class Librarian:
         """Read the collection back and compare with what the plan said it would do."""
         kind = plan["kind"]
         if kind in ("add_notes", "add_cloze_notes"):
-            ids = next((r for s, r in zip(plan["steps"], results) if s["action"] == "addNotes"), [])
+            ids = next((r for s, r in zip(plan["steps"], results, strict=False) if s["action"] == "addNotes"), [])
             created = [i for i in ids if i]
             info = self.anki.call("notesInfo", {"notes": created}) if created else []
             wanted = next(s for s in plan["steps"] if s["action"] == "addNotes")["params"]["notes"]
-            bad = [n["noteId"] for n, w in zip(info, [w for w, i in zip(wanted, ids) if i])
-                   if {k: v["value"] for k, v in n["fields"].items()} != w["fields"] or sorted(n["tags"]) != sorted(w["tags"])]
+            bad = [
+                n["noteId"]
+                for n, w in zip(info, [w for w, i in zip(wanted, ids, strict=False) if i], strict=False)
+                if {k: v["value"] for k, v in n["fields"].items()} != w["fields"]
+                or sorted(n["tags"]) != sorted(w["tags"])
+            ]
             return {"created": created, "not_created": len(ids) - len(created), "mismatched_after_write": bad}
         if kind == "update_note":
             note = self._notes([plan["preview"]["note_id"]], full=True)[0]
-            return {"note_id": note["note_id"], "fields_now": {k: _excerpt(v) for k, v in note["fields"].items()},
-                    "tags_now": note["tags"]}
+            return {
+                "note_id": note["note_id"],
+                "fields_now": {k: _excerpt(v) for k, v in note["fields"].items()},
+                "tags_now": note["tags"],
+            }
         if kind == "flag_cards":
             cards = plan["preview"]["flag"]
             now = {c["cardId"]: c["flags"] for c in self.anki.call("cardsInfo", {"cards": cards})} if cards else {}
             color = plan["preview"]["color"]
-            return {"flagged": [c for c in cards if now.get(c) == color], "failed": [c for c in cards if now.get(c) != color]}
+            return {
+                "flagged": [c for c in cards if now.get(c) == color],
+                "failed": [c for c in cards if now.get(c) != color],
+            }
         if kind == "delete_notes":
             ids = plan["steps"][0]["params"]["notes"] if plan["steps"] else []
             still = [n["noteId"] for n in self.anki.call("notesInfo", {"notes": ids}) if n]
