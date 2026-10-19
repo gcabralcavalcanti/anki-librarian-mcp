@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anki-librarian-mcp"
+version = "0.1.0"
+description = "MCP server that connects a model to Anki (AnkiConnect) through a write lock: dry-run plans, human approval, reconciliation, tag taxonomy, audit log."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "Guilherme Cabral" }]
+dependencies = ["mcp>=2.3,<3", "pydantic>=2"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+anki-librarian-mcp = "anki_librarian_mcp.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]

@@ -1,0 +1,32 @@
+# Copy to anki-librarian.toml (or point ANKI_LIBRARIAN_CONFIG at it). Every default below is the safe one.
+
+anki_url = "http://127.0.0.1:8765"   # AnkiConnect add-on, local only
+timeout_s = 10
+
+# Decks the server may write to (glob patterns, '::' is the Anki subdeck separator).
+# Empty list = read-only server. Notes outside these decks can be read, never changed.
+writable_decks = ["Inbox::*", "Languages::*", "Economics::*"]
+
+# Off by default. Turning these on is the human's decision; even then every change is a plan + approval.
+allow_delete = false
+allow_reschedule = false
+
+# elicit = the server asks the human through the MCP client; falls back to the terminal command
+# cli    = the human always approves in a terminal: anki-librarian-mcp approve <plan>
+# none   = no approval (tests and throwaway collections only)
+approval = "elicit"
+
+max_notes_per_plan = 50
+plan_ttl_minutes = 15        # an approved-but-unapplied plan expires; propose again
+similar_threshold = 0.85     # fronts this similar to an existing note are flagged in the preview
+basic_model = "Basic"
+cloze_model = "Cloze"
+agent_flags = [0, 4]         # the agent may set blue (4) or clear (0); red (1) is the human's "this card is wrong"
+state_dir = ".anki-librarian"  # plans.json and audit.jsonl
+
+[taxonomy]
+# Every tag must start with one of these roots (library-style hierarchy). Empty list = no taxonomy check.
+roots = ["Economics", "Humanities", "Exact", "Biology", "Specific"]
+operational = ["TEMP", "Radar"]      # working tags allowed besides the taxonomy
+max_depth = 6
+required = true                     # each note needs at least one taxonomy tag
