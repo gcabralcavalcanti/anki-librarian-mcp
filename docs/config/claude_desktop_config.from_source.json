@@ -3,7 +3,7 @@
     "anki": {
       "command": "python",
       "args": ["-m", "anki_librarian_mcp", "--config", "/absolute/path/to/anki-librarian.toml", "serve"],
-      "env": {"PYTHONPATH": "/absolute/path/to/anki-librarian-mcp/src"}
+      "env": {"PYTHONPATH": "/absolute/path/to/anki-librarian-mcp"}
     }
   }
 }

@@ -1,7 +1,7 @@
 """Full session against the real server process (stdio) with a fake Anki: search, propose, approve, apply,
 then a blocked delete. The human's approval is simulated by the client's elicitation callback.
 
-    python demo.py     # transcript as Markdown (see examples/demo_transcript.md)
+    python demo.py     # transcript as Markdown (see output/demo_transcript.md)
 """
 
 import json
@@ -13,7 +13,7 @@ from pathlib import Path
 import anyio
 
 ROOT = Path(__file__).resolve().parent
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tests")]
+sys.path[:0] = [str(ROOT), str(ROOT / "tests")]
 
 from fake_anki import FakeAnki, FakeAnkiHTTP  # noqa: E402
 from mcp import StdioServerParameters, types  # noqa: E402
@@ -35,7 +35,7 @@ async def session(url: str, state: Path):
     params = StdioServerParameters(
         command=sys.executable,
         args=["-m", "anki_librarian_mcp", "--config", str(cfg), "serve"],
-        env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+        env={**os.environ, "PYTHONPATH": str(ROOT)},
     )
 
     async def human(context, req):

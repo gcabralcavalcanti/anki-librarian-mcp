@@ -38,7 +38,7 @@ def test_client_configs_are_valid_and_start_the_server():
     import json
     from pathlib import Path
 
-    folder = Path(__file__).parent.parent / "examples" / "config"
+    folder = Path(__file__).parent.parent / "docs" / "config"
     files = sorted(set(folder.glob("*.json")) | {folder / ".mcp.json"})
     assert len(files) == 3
     for f in files:

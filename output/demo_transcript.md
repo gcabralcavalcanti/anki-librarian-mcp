@@ -28,10 +28,10 @@
 ### propose_add_notes (4 notes, one with a bad tag)
 ```json
 {
- "id": "p-68f468",
+ "id": "p-dea5c1",
  "kind": "add_notes",
  "status": "invalid",
- "expires": "2026-10-19T22:04:53+00:00",
+ "expires": "2026-10-19T23:41:15+00:00",
  "errors": [
   "note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)",
   "note 4: no taxonomy tag (needs one under Economics, Humanities, Exact, Biology, Specific)"
@@ -71,10 +71,10 @@
 ### propose_add_notes (bad note removed)
 ```json
 {
- "id": "p-660953",
+ "id": "p-ca1365",
  "kind": "add_notes",
  "status": "pending",
- "expires": "2026-10-19T22:04:53+00:00",
+ "expires": "2026-10-19T23:41:15+00:00",
  "errors": [],
  "preview": {
   "deck": "Economics::Macro",
@@ -109,7 +109,7 @@
 
 ### Elicitation shown to the human
 ```
-Plan p-660953 (add_notes)
+Plan p-ca1365 (add_notes)
 Add 2 note(s) to 'Economics::Macro'
   + What does the Taylor rule target?
   + Taylor principle
@@ -123,7 +123,7 @@ Write this to Anki?
 ### apply_plan
 ```json
 {
- "id": "p-660953",
+ "id": "p-ca1365",
  "status": "applied",
  "result": {
   "created": [
@@ -143,10 +143,10 @@ is_error=True: Error executing tool propose_delete_notes: BLOCKED: deleteNotes i
 
 ### Audit log
 ```
-{"event": "proposed", "plan": "p-68f468", "kind": "add_notes", "status": "invalid", "errors": ["note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)", "note 4: no taxonomy tag (needs one under Economics, Humanities, Exact, Biology, Specific)"], "steps": ["addNotes"]}
-{"event": "proposed", "plan": "p-660953", "kind": "add_notes", "status": "pending", "errors": [], "steps": ["addNotes"]}
-{"event": "approved", "plan": "p-660953", "via": "mcp elicitation"}
-{"event": "applied", "plan": "p-660953", "kind": "add_notes", "result": {"created": [1700000000002, 1700000000004], "not_created": 0, "mismatched_after_write": []}}
+{"event": "proposed", "plan": "p-dea5c1", "kind": "add_notes", "status": "invalid", "errors": ["note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)", "note 4: no taxonomy tag (needs one under Economics, Humanities, Exact, Biology, Specific)"], "steps": ["addNotes"]}
+{"event": "proposed", "plan": "p-ca1365", "kind": "add_notes", "status": "pending", "errors": [], "steps": ["addNotes"]}
+{"event": "approved", "plan": "p-ca1365", "via": "mcp elicitation"}
+{"event": "applied", "plan": "p-ca1365", "kind": "add_notes", "result": {"created": [1700000000002, 1700000000004], "not_created": 0, "mismatched_after_write": []}}
 {"event": "blocked", "error": "BLOCKED: deleteNotes is off. Turning it on is the human's decision (allow_delete = true in the config)."}
 ```
 

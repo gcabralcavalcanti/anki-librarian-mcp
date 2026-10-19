@@ -9,8 +9,8 @@ write is a dry-run plan that a human approves before anything reaches Anki.
 
 | Result | Source in this repo |
 |---|---|
-| One session against the real server process: a plan rejected for a bad tag, a duplicate skipped, a similar front flagged (0.92), a write approved by the human and read back, a delete blocked | `python demo.py` · [`examples/demo_transcript.md`](examples/demo_transcript.md) |
-| Delete and reschedule are off by default; sync, card resets and deck deletion never leave the server | [`src/anki_librarian_mcp/connect.py`](src/anki_librarian_mcp/connect.py) · [`tests/test_connect.py`](tests/test_connect.py) |
+| One session against the real server process: a plan rejected for a bad tag, a duplicate skipped, a similar front flagged (0.92), a write approved by the human and read back, a delete blocked | `python demo.py` · [`output/demo_transcript.md`](output/demo_transcript.md) |
+| Delete and reschedule are off by default; sync, card resets and deck deletion never leave the server | [`anki_librarian_mcp/connect.py`](anki_librarian_mcp/connect.py) · [`tests/test_connect.py`](tests/test_connect.py) |
 | 44 tests on a fake AnkiConnect (in memory and over HTTP) plus a full MCP client session; no Anki needed | [`tests/`](tests/) |
 | No test, demo or CI run ever writes to a real collection | [`tests/fake_anki.py`](tests/fake_anki.py) |
 
@@ -55,13 +55,13 @@ cp anki-librarian.example.toml anki-librarian.toml     # then list your writable
 anki-librarian-mcp check                                 # shows the settings and pings AnkiConnect
 ```
 
-Ready-made client configs are in [`examples/config/`](examples/config/):
+Ready-made client configs are in [`docs/config/`](docs/config/):
 
 | Client | File | Where it goes |
 |---|---|---|
-| Claude Code (project) | [`.mcp.json`](examples/config/.mcp.json) | project root; or run `claude mcp add anki -- anki-librarian-mcp --config anki-librarian.toml serve` |
-| Claude Desktop | [`claude_desktop_config.json`](examples/config/claude_desktop_config.json) | Settings > Developer > Edit Config; merge the `mcpServers` entry |
-| Either, from a source checkout | [`claude_desktop_config.from_source.json`](examples/config/claude_desktop_config.from_source.json) | same, without installing the package |
+| Claude Code (project) | [`.mcp.json`](docs/config/.mcp.json) | project root; or run `claude mcp add anki -- anki-librarian-mcp --config anki-librarian.toml serve` |
+| Claude Desktop | [`claude_desktop_config.json`](docs/config/claude_desktop_config.json) | Settings > Developer > Edit Config; merge the `mcpServers` entry |
+| Either, from a source checkout | [`claude_desktop_config.from_source.json`](docs/config/claude_desktop_config.from_source.json) | same, without installing the package |
 
 Restart the client; the tools appear as `anki`. Start with an empty `writable_decks` list (read-only) and add a
 test deck before your real ones.

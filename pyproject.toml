@@ -19,11 +19,11 @@ test = ["pytest>=8"]
 anki-librarian-mcp = "anki_librarian_mcp.cli:main"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+include = ["anki_librarian_mcp*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "tests"]
+pythonpath = [".", "tests"]
 
 [tool.ruff]
 line-length = 120
