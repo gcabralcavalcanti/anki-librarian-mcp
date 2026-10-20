@@ -9,6 +9,7 @@
 | Approve a plan from the terminal | `anki-librarian-mcp approve <plan>` (asks you to type the plan id) |
 | Reject a plan | `anki-librarian-mcp reject <plan> "reason"` |
 | Last events (what was proposed, approved, written, blocked) | `anki-librarian-mcp audit -n 30` |
+| Live demo on GitHub Pages | every push to main runs `.github/workflows/pages.yml` (no key) and publishes the simulation; turn it on once in Settings > Pages > Source = GitHub Actions |
 | Demo, no key | `python demo.py` |
 | Tests | `pip install -e ".[test]"` then `python -m pytest` |
 

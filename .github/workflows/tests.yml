@@ -20,5 +20,5 @@ jobs:
         run: pip install ruff && ruff check . && ruff format --check .
       - name: Tests (fake AnkiConnect only - no Anki, no network)
         run: python -m pytest -v
-      - name: Demo session (real server process over stdio, fake Anki)
+      - name: Demo session (the real server, fake Anki)
         run: python demo.py --no-open

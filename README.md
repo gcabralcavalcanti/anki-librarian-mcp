@@ -3,6 +3,8 @@
 Lets Claude turn your study material into Anki flashcards and manage your collection, without ever writing
 anything you have not approved.
 
+**[Live demo](https://gcabralcavalcanti.github.io/anki-librarian-mcp/)**: the step-by-step simulation, built from this repository on every push.
+
 ![Built with AI assistance](https://img.shields.io/badge/built%20with-AI%20assistance-6b46c1)
 ![Fictitious demo data](https://img.shields.io/badge/data-practice%20collection-555)
 
