@@ -72,17 +72,8 @@ def simulation(live: bool) -> tuple[list[dict], str]:
     if llm.calls:
         note = f"This run called Claude {llm.calls} times (about US$ {llm.cost(llm.tokens_in, llm.tokens_out):.4f})."
     else:
-        note = (
-            f"Replayed {llm.replayed} recorded answers; recording them cost about "
-            f"US$ {llm.recorded_cost:.4f} with {pipeline_model()}."
-        )
+        note = "The model's answers were recorded once and replay here, so this runs without an API key."
     return examples, note
-
-
-def pipeline_model() -> str:
-    from anki_librarian_mcp import llm
-
-    return llm.MODEL
 
 
 async def session(url: str, state: Path, show) -> None:

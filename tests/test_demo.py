@@ -18,7 +18,7 @@ def test_simulation_replays_from_recordings_and_renders():
     import demo
 
     examples, note = demo.simulation(live=False)
-    assert note.startswith("Replayed")
+    assert "without an API key" in note
     for ex in examples:
         verdicts = {v["verdict"] for v in ex["plan"]["verdicts"]}
         assert "GAP" in verdicts and "ALREADY HAVE" in verdicts  # the search found cards the collection already had
@@ -41,3 +41,14 @@ def test_skills_are_served_as_prompts(tmp_path, fake):
     names, text = anyio.run(main)
     assert names == ["make_cards", "harvest", "plan_deck", "generate_cards", "tag_cards", "radar"]
     assert "# Harvest" in text and "# Generator" in text and text.endswith("NOTES")
+
+
+def test_empty_key_means_demo_mode_without_any_other_lookup(monkeypatch):
+    import types
+
+    from anki_librarian_mcp import llm
+
+    fake_registry = types.SimpleNamespace(OpenKey=None, HKEY_CURRENT_USER=None, QueryValueEx=None)
+    monkeypatch.setitem(sys.modules, "winreg", fake_registry)  # would crash if it were consulted
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+    assert llm._key() is None

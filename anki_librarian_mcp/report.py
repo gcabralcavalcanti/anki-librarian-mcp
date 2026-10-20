@@ -184,7 +184,7 @@ def page(examples: list[dict], cost_note: str, only: tuple[str, ...] = ()) -> st
 <script>window.MathJax={{tex:{{inlineMath:[["\\\\(","\\\\)"]]}}}};</script>
 <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script></head><body>
 <header><h1>From study material to Anki cards</h1>
-<p>Two examples run through the same steps: a dense technical topic and an applied business case. The steps are
-the skills in <code>anki_librarian_mcp/skills/</code>; the collection search, the checks, the approval and the
-write are done by the server against a practice collection. {esc(cost_note)}</p></header>
+<p>Two examples run through the same steps: a dense technical topic and an applied business case. The steps follow
+the card-making instructions Claude uses; the search, the checks, the approval and the write are done by the
+server against a practice collection. {esc(cost_note)}</p></header>
 <div class="colhead"><div></div>{heads}</div><div class="grid">{"".join(rows)}</div></body></html>"""

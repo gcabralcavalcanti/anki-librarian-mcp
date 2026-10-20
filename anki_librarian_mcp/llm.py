@@ -26,8 +26,8 @@ class NoRecording(RuntimeError):
 
 
 def _key() -> str | None:
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        return os.environ["ANTHROPIC_API_KEY"]
+    if "ANTHROPIC_API_KEY" in os.environ:  # set, even empty, wins: empty means demo mode, no other lookup
+        return os.environ["ANTHROPIC_API_KEY"] or None
     if os.name == "nt":  # set with setx after this terminal was opened
         try:
             import winreg

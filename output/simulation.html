@@ -41,9 +41,9 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}td,th{border-bottom:1
 <script>window.MathJax={tex:{inlineMath:[["\\(","\\)"]]}};</script>
 <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script></head><body>
 <header><h1>From study material to Anki cards</h1>
-<p>Two examples run through the same steps: a dense technical topic and an applied business case. The steps are
-the skills in <code>anki_librarian_mcp/skills/</code>; the collection search, the checks, the approval and the
-write are done by the server against a practice collection. Replayed 6 recorded answers; recording them cost about US$ 0.0245 with claude-haiku-5-5.</p></header>
+<p>Two examples run through the same steps: a dense technical topic and an applied business case. The steps follow
+the card-making instructions Claude uses; the search, the checks, the approval and the write are done by the
+server against a practice collection. The model&#x27;s answers were recorded once and replay here, so this runs without an API key.</p></header>
 <div class="colhead"><div></div><div>Dense topic: heteroskedasticity (econometrics notes)</div><div>Applied case: unit economics of a subscription</div></div><div class="grid"><div class="row" id="s1"><div class="step"><span class="n">1</span><b>Material</b><p>What you hand over: notes, a chapter, a case.</p></div><div class="col"><div class="material"><b>Lecture notes: heteroskedasticity in linear regression</b><br>Setting. In the linear model \(y = X\beta + u\), ordinary least squares (OLS) gives \(\hat{\beta} = (X&#x27;X)^{-1}X&#x27;y\). Unbiasedness needs only exogeneity, \(E[u \mid X] = 0\). The usual formula for the…</div><details><summary>full text</summary><pre># Lecture notes: heteroskedasticity in linear regression
 
 **Setting.** In the linear model \(y = X\beta + u\), ordinary least squares (OLS) gives
