@@ -1,4 +1,4 @@
-# Demo session: the real server process over stdio, with a practice Anki
+# Demo session: the real server, started the way Claude Desktop starts it, with a practice Anki
 
 ### find_notes('taylor')
 ```json

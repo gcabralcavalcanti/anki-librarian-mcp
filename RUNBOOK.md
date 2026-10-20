@@ -15,7 +15,7 @@
 ## Update
 1. `pip install -U git+https://github.com/gcabralcavalcanti/anki-librarian-mcp` (or `git pull` in a checkout).
 2. Compare your settings with `anki-librarian.example.toml`; new settings always default to the safe value.
-3. The similarity index rebuilds itself when notes change. To rebuild it from scratch, delete
+3. The similarity index (the word list used to find similar cards) rebuilds itself when notes change. To rebuild it from scratch, delete
    `.anki-librarian/similarity-index.json`.
 4. Changed a skill or the demo material? Re-record the demo answers with `python demo.py --live` (needs
    `ANTHROPIC_API_KEY`; costs a few cents) and commit `data/recorded/`.

@@ -92,7 +92,7 @@ finance".
 |---|---|
 | [`anki_librarian_mcp/skills/`](anki_librarian_mcp/skills/) | the instructions Claude follows at each step (debrief, plan, write, tag, weekly radar); also offered as prompts in Claude Desktop |
 | `service.py` | every action as a plan first: search, checks, approval, write, read-back |
-| `retrieval.py` | the similarity index over your whole collection, updated only where notes changed |
+| `retrieval.py` | the search by similarity: a list of the words and phrases in every note of your collection, weighted by how rare they are, updated only where notes changed |
 | `cards.py` | card types, size limits, the check against questions that give the answer away |
 | `connect.py` | the only door to Anki: blocks forbidden actions before any request leaves |
 | `media.py` | free-image search and pictures on cards |
@@ -117,8 +117,22 @@ this repository.
 
 ## Using it with your own collection
 
-I use this every day with my own collection and study material, which stay private. If you want to adapt the
-taxonomy or the card rules to how you study, open an issue and I can help.
+1. **Make a test deck first.** In Anki, create a deck such as `Inbox::Test` and copy a few cards into it.
+2. **Install and check** (section Install above). `check` must say it reached Anki; if not, open Anki and see that
+   AnkiConnect is installed.
+3. **Say where it may write.** In `anki-librarian.toml`, set `writable_decks = ["Inbox::Test"]`. Every other deck
+   stays read-only: it is searched for duplicates, never changed.
+4. **Set your tag roots.** Under `[taxonomy]`, list the top levels you already use (or set `required = false` to
+   skip the tag check while you try it).
+5. **Connect it to Claude** (section Install) and ask for cards from a short text. Approve the first plan, open the
+   deck in Anki and compare. When it behaves the way you want, add your real decks to `writable_decks`.
+
+Approvals and the record of every action stay in the `.anki-librarian/` folder next to the settings.
+
+**Study blocks on the calendar.** The other side of the flashcards, how many cards fall due in each deck and where
+that time goes in the week, is in [personal-ai-agents](https://github.com/gcabralcavalcanti/personal-ai-agents):
+`python demo.py study` turns the review forecast into study blocks for the task manager, checked by the same kind of
+gate.
 
 ## How AI was used
 

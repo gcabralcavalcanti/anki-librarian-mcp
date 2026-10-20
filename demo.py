@@ -145,7 +145,7 @@ def transcript() -> str:
         tags=MONETARY,
     )
     with FakeAnkiHTTP(fake) as srv, tempfile.TemporaryDirectory() as tmp:
-        out.write("# Demo session: the real server process over stdio, with a practice Anki\n")
+        out.write("# Demo session: the real server, started the way Claude Desktop starts it, with a practice Anki\n")
         with redirect_stdout(io.StringIO()):
             anyio.run(session, srv.url, Path(tmp), show)
         audit = (Path(tmp) / "state" / "audit.jsonl").read_text(encoding="utf-8").splitlines()

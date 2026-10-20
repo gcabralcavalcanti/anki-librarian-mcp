@@ -136,7 +136,7 @@ def stage_approval(ex: dict) -> str:
     return (
         f'<div class="form"><b>Write this to Anki?</b><p>Add {pv["to_add"]} note(s) to “{esc(pv["deck"])}”</p>'
         f'<ul>{fronts}{more}</ul><div class="buttons"><span class="btn ok">Approve</span>'
-        f'<span class="btn">Reject</span></div><small>asked by the server through the app (MCP elicitation), '
+        f'<span class="btn">Reject</span></div><small>asked by the server in a form inside the app, '
         f"or typed in a terminal</small></div>"
     )
 
