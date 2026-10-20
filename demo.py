@@ -13,6 +13,7 @@
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 import webbrowser
@@ -163,13 +164,20 @@ def transcript() -> str:
     return out.getvalue()
 
 
+def stable(text: str) -> str:
+    """Same output on every run: plan ids and timestamps change each time, so they are numbered and blanked."""
+    ids: dict[str, str] = {}
+    text = re.sub(r"\bp-[0-9a-f]{6}\b", lambda m: ids.setdefault(m.group(0), f"p-demo{len(ids) + 1}"), text)
+    return re.sub(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00", "2026-01-01T00:00:00+00:00", text)
+
+
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     OUT.mkdir(exist_ok=True)
     examples, note = simulation("--live" in argv)
     page = OUT / "simulation.html"
-    page.write_text(report.page(examples, note), encoding="utf-8")
-    (OUT / "demo_transcript.md").write_text(transcript(), encoding="utf-8")
+    page.write_text(stable(report.page(examples, note)), encoding="utf-8")
+    (OUT / "demo_transcript.md").write_text(stable(transcript()), encoding="utf-8")
     for ex in examples:
         written = len(ex["applied"]["result"]["created"]) if ex["applied"] else 0
         print(f"{ex['title']}: {len(ex['cards'])} cards written by the model, {written} added after approval")
