@@ -4,6 +4,8 @@ human through MCP elicitation, or tells them to approve in a terminal when the c
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import Annotated
 
 from mcp import types
@@ -11,24 +13,36 @@ from mcp.server.mcpserver import Context, MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel, Field
 
+from . import media
 from .connect import AnkiError, Blocked
 from .service import Librarian, PlanError
+
+SKILLS = Path(__file__).parent / "skills"
+SEPARATOR = "\n\n---\n\n"
 
 READ_ONLY = types.ToolAnnotations(readOnlyHint=True, openWorldHint=False)
 PROPOSE = types.ToolAnnotations(readOnlyHint=True, openWorldHint=False)  # a plan writes nothing to Anki
 APPLY = types.ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 
-INSTRUCTIONS = """Anki through a locked door. Reads are free. To change the collection: call a propose_* tool,
+INSTRUCTIONS = """Anki through a locked door. To make cards from material, follow the make_cards prompt (harvest,
+plan, generate, tag), then propose.  Reads are free. To change the collection: call a propose_* tool,
 show the returned preview to the user (duplicates skipped, similar notes, tag errors), then call apply_plan.
 The user approves every plan; never claim a change was made before apply_plan returns status "applied".
 Deleting notes and rescheduling are off unless the user switched them on in the config. Flag 1 (red) is the
 user's; never try to set it. Search before creating: the server already skips duplicates, but say which ones."""
 
 
+class Image(BaseModel):
+    url: str = Field(default="", description="https link to a PNG, JPEG, GIF or WebP image (e.g. from search_images)")
+    path: str = Field(default="", description="or a local file path")
+    credit: str = Field(default="", description="credit line, required for CC BY and CC BY-SA images")
+
+
 class BasicNote(BaseModel):
-    front: str
+    front: str = Field(description="'Subject: topic <br><br> question'; maps start with [Map], mechanisms with [Macro]")
     back: str = ""
-    tags: list[str] = Field(default_factory=list, description="hierarchical tags, e.g. Economics::Macro::Inflation")
+    tags: list[str] = Field(default_factory=list, description="hierarchical tags, e.g. Economics::Macroeconomics")
+    image: Image | None = None
 
 
 class ClozeNote(BaseModel):
@@ -59,7 +73,9 @@ def _summary(plan: dict) -> str:
 
 
 def build_server(lib: Librarian) -> MCPServer:
-    app = MCPServer("anki-librarian", instructions=INSTRUCTIONS)
+    app = MCPServer(
+        "anki-librarian", instructions=INSTRUCTIONS, log_level=os.environ.get("ANKI_LIBRARIAN_LOG", "CRITICAL")
+    )
 
     def _safe(fn):
         """Run a tool body; a refusal comes back to the model as a readable tool error (and, if the lock
@@ -156,6 +172,45 @@ def build_server(lib: Librarian) -> MCPServer:
                     f"terminal: anki-librarian-mcp approve {plan_id}, then call apply_plan"
                 }
         return _safe(lambda: lib.apply(plan_id))
+
+    @app.tool(annotations=types.ToolAnnotations(readOnlyHint=True, openWorldHint=True))
+    def search_images(term: str, n: int = 6) -> list[dict]:
+        """Freely licensed images from Wikimedia Commons for a term (English terms work best for objects).
+        Look at the candidates before choosing one; pass its url and credit in a note's image field."""
+        return _safe(lambda: media.search_commons(term, n))
+
+    @app.tool(annotations=PROPOSE)
+    def propose_attach_image(note_id: int, image: Image, field: str = "Back") -> dict:
+        """Dry run for adding a picture to an existing note (stored in Anki's media folder, credit line added)."""
+        return _safe(lambda: lib.propose_attach_image(note_id, image.model_dump(exclude_defaults=True), field))
+
+    def skill(name: str) -> str:
+        return (SKILLS / f"{name}.md").read_text(encoding="utf-8")
+
+    @app.prompt(title="Make cards from material")
+    def make_cards(material: str) -> str:
+        """The whole flow: harvest, plan (searching the collection), generate, tag, then propose for approval."""
+        steps = SEPARATOR.join(skill(n) for n in ("harvest", "planner", "generator", "tags"))
+        task = "Run the steps above on this material, stopping at the planner's checkpoint and before apply_plan:"
+        return f"{steps}{SEPARATOR}{task}\n\n{material}"
+
+    def register(file: str, name: str, title: str) -> None:
+        text = skill(file)
+        about = next((line[13:] for line in text.splitlines() if line.startswith("description: ")), title)
+
+        def prompt(material: str = "") -> str:
+            return f"{text}{SEPARATOR}{material}" if material else text
+
+        app.prompt(name=name, title=title, description=about)(prompt)
+
+    for file, name, title in (
+        ("harvest", "harvest", "Harvest"),
+        ("planner", "plan_deck", "Plan a deck"),
+        ("generator", "generate_cards", "Generate cards"),
+        ("tags", "tag_cards", "Tag cards"),
+        ("radar", "radar", "Weekly radar"),
+    ):
+        register(file, name, title)
 
     @app.tool(annotations=types.ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=False))
     def reject_plan(plan_id: str, reason: str = "") -> dict:

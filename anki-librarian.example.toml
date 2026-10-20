@@ -26,7 +26,7 @@ state_dir = ".anki-librarian"  # plans.json and audit.jsonl
 
 [taxonomy]
 # Every tag must start with one of these roots (library-style hierarchy). Empty list = no taxonomy check.
-roots = ["Economics", "Humanities", "Exact", "Biology", "Specific"]
-operational = ["TEMP", "Radar"]      # working tags allowed besides the taxonomy
+roots = ["Economics", "Humanities", "Exact.Sciences", "Biological.Sciences", "Specifics"]
+operational = ["TEMP", "Update"]       # working tags allowed besides the taxonomy (see anki_librarian_mcp/skills/taxonomy.md)
 max_depth = 6
 required = true                     # each note needs at least one taxonomy tag

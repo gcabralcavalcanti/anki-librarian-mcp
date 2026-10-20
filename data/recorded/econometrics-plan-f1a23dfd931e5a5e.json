@@ -1,0 +1,156 @@
+{
+ "task": "econometrics-plan",
+ "model": "claude-haiku-5-5",
+ "recorded_at": "2026-10-20T01:47:36+00:00",
+ "usage": {
+  "input_tokens": 3763,
+  "output_tokens": 5409
+ },
+ "answer": {
+  "register": [
+   {
+    "name": "TP",
+    "percent": 55
+   },
+   {
+    "name": "TO",
+    "percent": 30
+   },
+   {
+    "name": "MN",
+    "percent": 15
+   }
+  ],
+  "subject_type": "quantitative",
+  "skeleton": "Heteroskedasticity (Var(u|x) varies with x) -> OLS still unbiased and consistent (exogeneity holds) -> standard errors wrong -> t-tests and CIs invalid -> OLS not BLUE, efficiency lost -> detect with residual plot, Breusch-Pagan (nR^2 ~ chi2(k)), White (adds squares and cross-products) -> remedies: keep OLS with robust sandwich SE (large-sample default; HC2/HC3 in small samples) or change the estimator: WLS with known h(x) (divide by sqrt(h)) or FGLS with estimated h (efficient only asymptotically, can hurt if h is misspecified) -> log transform as a possible fix of the variance pattern (mention only).",
+  "verdicts": [
+   {
+    "concept": "OLS stays unbiased and consistent",
+    "verdict": "ALREADY HAVE",
+    "note_id": 1700000000000,
+    "reason": "Existing card's recall target is why exogeneity alone makes beta-hat unbiased; heteroskedasticity does not touch that condition."
+   },
+   {
+    "concept": "Standard errors are wrong",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No card covers why sigma^2(X'X)^-1 fails under heteroskedasticity and why tests over-reject."
+   },
+   {
+    "concept": "OLS loses efficiency",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Existing Gauss-Markov card asks for the conditions; the consequence (OLS not BLUE under heteroskedasticity) is the missing layer."
+   },
+   {
+    "concept": "Residuals against fitted values",
+    "verdict": "OUT OF SCOPE",
+    "note_id": 0,
+    "reason": "Single-sentence mention (funnel shape) with no marker or correction; folded into the Breusch-Pagan card context only if needed."
+   },
+   {
+    "concept": "Breusch-Pagan test",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Marked APPLIED; no card on the auxiliary regression and the nR^2 chi-squared(k) statistic."
+   },
+   {
+    "concept": "White test",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No card on the squares and cross-products auxiliary regression and its degrees-of-freedom trade-off."
+   },
+   {
+    "concept": "Robust standard errors (sandwich estimator)",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Marked VERIFY; no card on the sandwich form and its large-sample validity."
+   },
+   {
+    "concept": "Weighted least squares with known variance form",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No card on dividing by sqrt(h(x)) and why WLS is efficient."
+   },
+   {
+    "concept": "Feasible GLS with estimated h",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No card on asymptotic-only efficiency and the risk of misspecifying h."
+   },
+   {
+    "concept": "Log transformation",
+    "verdict": "OUT OF SCOPE",
+    "note_id": 0,
+    "reason": "One-line mention with no marker or correction; not a concept that needs its own card."
+   },
+   {
+    "concept": "Small-sample corrections HC2 and HC3",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Merged into the doubt card on robust errors (its resolution); no separate card, so no extra count."
+   },
+   {
+    "concept": "Doubt: If the coefficients are still unbiased, why care?",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Doubt becomes a direct card; no existing card links bias of estimates to wrong inference."
+   },
+   {
+    "concept": "Doubt: Should robust standard errors always be used?",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Doubt becomes a direct card; existing cards do not cover the small-sample bias of robust SE or HC2/HC3."
+   },
+   {
+    "concept": "Open doubt: When exactly does WLS with an estimated variance function beat OLS with robust errors in practice?",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Open doubt becomes a direct card kept verbatim, answer left for the user to resolve."
+   }
+  ],
+  "nuclei": [
+   {
+    "name": "What heteroskedasticity breaks",
+    "layers": [
+     "map",
+     "macro"
+    ],
+    "cards": 2
+   },
+   {
+    "name": "Detection: Breusch-Pagan and White",
+    "layers": [
+     "macro",
+     "mnemonic"
+    ],
+    "cards": 2
+   },
+   {
+    "name": "Remedies: robust SE, WLS, FGLS",
+    "layers": [
+     "map",
+     "macro",
+     "reconstruction"
+    ],
+    "cards": 3
+   },
+   {
+    "name": "Small samples and user doubts",
+    "layers": [
+     "macro",
+     "reconstruction"
+    ],
+    "cards": 3
+   }
+  ],
+  "essential_core": [
+   "Standard errors are wrong: invalid t-tests and CIs, too small in the spending example",
+   "OLS loses efficiency: Gauss-Markov needs homoskedasticity, so OLS is not BLUE",
+   "Robust sandwich SE: keep OLS, replace the middle term with the sum of squared residuals times x_i x_i'",
+   "WLS with known h(x): divide by sqrt(h(x)) to get a homoskedastic model",
+   "Breusch-Pagan: n times R^2 of squared residuals on regressors is chi-squared with k df under homoskedasticity"
+  ],
+  "order": "Deep-study, general to specific: unbiasedness vs inference (SE wrong, doubt on why bias matters) -> efficiency loss -> detection (Breusch-Pagan, White) -> remedies (sandwich, WLS, FGLS) -> small-sample HC2/HC3 and the open WLS-vs-robust question."
+ }
+}

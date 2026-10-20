@@ -1,0 +1,204 @@
+{
+ "task": "business-plan",
+ "model": "claude-haiku-5-5",
+ "recorded_at": "2026-10-20T01:49:10+00:00",
+ "usage": {
+  "input_tokens": 3709,
+  "output_tokens": 6639
+ },
+ "answer": {
+  "register": [
+   {
+    "name": "TP",
+    "percent": 35
+   },
+   {
+    "name": "TO",
+    "percent": 30
+   },
+   {
+    "name": "DP",
+    "percent": 25
+   },
+   {
+    "name": "CH",
+    "percent": 0
+   },
+   {
+    "name": "MN",
+    "percent": 10
+   }
+  ],
+  "subject_type": "quantitative",
+  "skeleton": "Price and cost -> contribution margin per subscriber -> LTV on margin (lifetime = 1/churn) -> CAC (same-period spend / new subscribers) -> payback = CAC / monthly margin -> LTV/CAC vs 3 with cash timing -> decision: double ad spend (CAC rises with spend, LTV/CAC already below 3) -> levers: churn (annual plan, skip month), margin (price to $33), measurement (CAC by channel and cohort). Pitfall: revenue instead of margin overstates LTV 2.5x.",
+  "verdicts": [
+   {
+    "concept": "Contribution margin",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No card covers $30 price minus $18 cost = $12 margin (40%) as the value basis. Planned as card 1."
+   },
+   {
+    "concept": "CAC",
+    "verdict": "ALREADY HAVE",
+    "note_id": 1700000000006,
+    "reason": "Existing card asks how CAC is calculated, which is the definition. The same-period $90,000 / 1,500 = $60 example is illustration only."
+   },
+   {
+    "concept": "LTV on margin",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No card for margin x lifetime = $12 x 12.5 = $150. Planned as card 2, which also carries churn sensitivity (8% to 6%, 16.7 months, about $200)."
+   },
+   {
+    "concept": "LTV/CAC target",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "VERIFY marker: 2.5 here versus rule-of-thumb minimum 3 before scaling paid acquisition. No card. Planned as card 4 together with payback."
+   },
+   {
+    "concept": "CAC payback",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No card for $60 / $12 = 5 months and the cash outflow during those months. Planned as card 3."
+   },
+   {
+    "concept": "Expected lifetime",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "REVERSE marker: lifetime is about 1/churn (12.5 months at 8%). No card. Planned as card 5, run in both directions."
+   },
+   {
+    "concept": "Churn sensitivity",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Cutting churn 8% to 6% raises lifetime to 16.7 months and LTV to about $200. Folded into card 2."
+   },
+   {
+    "concept": "First-month churn",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "A single average churn rate hides early drop-off. Planned as card 6 with cohort curves."
+   },
+   {
+    "concept": "Cohort retention curves",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No card on building retention by signup cohort. Planned as card 6."
+   },
+   {
+    "concept": "Revenue instead of margin pitfall",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "APPLIED marker: LTV on revenue overstates value 2.5x (30/12). No card. Planned as card 7."
+   },
+   {
+    "concept": "Fast growth burns cash",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Search returned only an unrelated discount-rate card (score 0.23). Planned as card 4, with LTV/CAC and payback read together."
+   },
+   {
+    "concept": "CAC by channel and cohort",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "APPLIED marker: a blended CAC hides an expensive channel behind a cheap one. No card. Planned as card 8."
+   },
+   {
+    "concept": "Price test on a traffic share",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Price rise to $33 tested on part of traffic is a margin lever. Deferred: over the 10-card cap, first in the next batch."
+   },
+   {
+    "concept": "Northwind decision: double ad spend",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "No decision card on doubling paid ads when CAC rises with spend and LTV/CAC is below 3. Planned as card 9."
+   },
+   {
+    "concept": "Levers on the table",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Churn levers (annual plan, skip-a-month), price rise and measurement have no card as a set. Covered by card 9; the price lever is deferred and the annual plan lever is in card 10."
+   },
+   {
+    "concept": "Open doubt: annual plan discount vs lower margin and cash forward",
+    "verdict": "GAP",
+    "note_id": 0,
+    "reason": "Doubt must end as a card, kept verbatim. Planned as card 10 with the doubt as front; the resolution stays open until the user supplies it."
+   }
+  ],
+  "nuclei": [
+   {
+    "name": "Margin per subscriber",
+    "layers": [
+     "map",
+     "macro"
+    ],
+    "cards": 1
+   },
+   {
+    "name": "LTV and lifetime",
+    "layers": [
+     "map",
+     "macro"
+    ],
+    "cards": 2
+   },
+   {
+    "name": "Payback and cash",
+    "layers": [
+     "map",
+     "macro"
+    ],
+    "cards": 2
+   },
+   {
+    "name": "Churn and retention",
+    "layers": [
+     "map",
+     "macro"
+    ],
+    "cards": 1
+   },
+   {
+    "name": "Revenue vs margin pitfall",
+    "layers": [
+     "macro"
+    ],
+    "cards": 1
+   },
+   {
+    "name": "Measurement by channel and cohort",
+    "layers": [
+     "map"
+    ],
+    "cards": 1
+   },
+   {
+    "name": "Northwind ad-spend decision",
+    "layers": [
+     "macro"
+    ],
+    "cards": 1
+   },
+   {
+    "name": "Annual plan discount doubt",
+    "layers": [
+     "macro"
+    ],
+    "cards": 1
+   }
+  ],
+  "essential_core": [
+   "Contribution margin: $12 of $30 (40%) is the value basis, not revenue",
+   "LTV on margin: $12 x 12.5 = $150, and lifetime is about 1/churn",
+   "CAC payback: $60 / $12 = 5 months of cash outflow per new subscriber",
+   "LTV/CAC 2.5 versus rule-of-thumb 3, read together with payback",
+   "Revenue instead of margin overstates LTV 2.5x",
+   "Northwind decision: doubling ad spend when CAC rises and LTV/CAC is below 3"
+  ],
+  "order": "Deep-study, general to specific: 1 contribution margin; 2 LTV on margin with churn sensitivity; 5 expected lifetime (reverse); 3 CAC payback; 4 LTV/CAC vs payback and fast-growth cash; 6 first-month churn and cohort curves; 7 revenue vs margin pitfall; 8 CAC by channel and cohort; 9 Northwind decision; 10 annual plan doubt. Cap: 10 new cards; the price test is deferred to the next batch."
+ }
+}

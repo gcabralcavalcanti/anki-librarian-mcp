@@ -7,10 +7,11 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 
-from . import checks
+from . import cards, checks, media
 from .config import Settings
 from .connect import AnkiConnect, Blocked
 from .plans import Audit, PlanStore
+from .retrieval import CollectionIndex
 
 
 class PlanError(Exception):
@@ -33,6 +34,8 @@ class Librarian:
         )
         self.plans = PlanStore(settings.state_dir, settings.plan_ttl_minutes)
         self.audit = Audit(settings.state_dir)
+        self.index = CollectionIndex(self.anki, settings.state_dir)
+        self.fetch = media.http_get
 
     # ================================================================== reads (always free)
     def list_decks(self) -> dict:
@@ -75,8 +78,15 @@ class Librarian:
 
     # ================================================================== proposals (dry runs)
     def propose_add_notes(self, deck: str, notes: list[dict]) -> dict:
-        """notes: [{front, back, tags?}] -> plan with duplicates removed and similar notes flagged."""
-        rows = [{"fields": {"Front": n["front"], "Back": n.get("back", "")}, "tags": n.get("tags", [])} for n in notes]
+        """notes: [{front, back, tags?, image?: {path | url, credit?}}] -> plan. Searches the collection first."""
+        rows = [
+            {
+                "fields": {"Front": n["front"], "Back": n.get("back", "")},
+                "tags": n.get("tags", []),
+                "image": n.get("image"),
+            }
+            for n in notes
+        ]
         return self._propose_add("add_notes", deck, self.s.basic_model, rows, [])
 
     def propose_add_cloze_notes(self, deck: str, notes: list[dict]) -> dict:
@@ -89,6 +99,18 @@ class Librarian:
             )
         return self._propose_add("add_cloze_notes", deck, self.s.cloze_model, rows, errors)
 
+    def _card_checks(self, i: int, row: dict, errors: list, warnings: list) -> dict:
+        front, back = row["fields"]["Front"], row["fields"]["Back"]
+        w = cards.weight(front, back)
+        found = list(w["problems"])
+        for p in cards.front_problems(front, row["tags"]):
+            if "missing theme" in p:
+                warnings.append(f"note {i}: {p}")
+            else:
+                found.append(p)
+        (errors if self.s.card_rules == "enforce" else warnings).extend(f"note {i}: {p}" for p in found)
+        return {"note": i, "layer": w["layer"], "weight": w["pc"], "chars": w["chars"]}
+
     def _propose_add(self, kind: str, deck: str, model: str, rows: list[dict], errors: list[str]) -> dict:
         if not rows:
             raise PlanError("no notes given")
@@ -96,29 +118,42 @@ class Librarian:
             raise PlanError(f"{len(rows)} notes: the limit is {self.s.max_notes_per_plan} per plan; split the batch")
         if not self.s.deck_writable(deck):
             errors.append(f"deck '{deck}' is outside the writable decks {self.s.writable_decks}")
-        for i, r in enumerate(rows):
-            errors += [f"note {i + 1}: {e}" for e in checks.tag_errors(r["tags"], self.s.taxonomy)]
+        warnings, card_report, media_steps = [], [], []
+        for i, r in enumerate(rows, 1):
+            errors += [f"note {i}: {e}" for e in checks.tag_errors(r["tags"], self.s.taxonomy)]
+            if kind == "add_notes" and self.s.card_rules != "off":
+                card_report.append(self._card_checks(i, r, errors, warnings))
+            if r.get("image"):
+                try:
+                    name, step = media.prepare(r["image"], self.s.state_dir, r["fields"]["Front"], self.fetch)
+                except media.MediaError as e:
+                    errors.append(f"note {i}: image: {e}")
+                else:
+                    media_steps.append(step)
+                    r["fields"]["Back"] += media.html(name, r["image"].get("credit", ""))
+        self.index.refresh()
         first = next(iter(rows[0]["fields"]))
         to_add, duplicates, conflicts, similar, seen = [], [], [], [], {}
-        for i, r in enumerate(rows):
+        for i, r in enumerate(rows, 1):
             front, back = r["fields"][first], list(r["fields"].values())[1]
             key = checks.normalize(front)
             if key in seen:
                 duplicates.append(
-                    {"note": i + 1, "front": _excerpt(front), "duplicate_of": f"note {seen[key]} in this batch"}
+                    {"note": i, "front": _excerpt(front), "duplicate_of": f"note {seen[key]} in this batch"}
                 )
                 continue
-            seen[key] = i + 1
+            seen[key] = i
             match = self._reconcile(front, back)
             if match["kind"] == "duplicate":
-                duplicates.append({"note": i + 1, "front": _excerpt(front), "duplicate_of": match["note_id"]})
+                duplicates.append({"note": i, "front": _excerpt(front), "duplicate_of": match["note_id"]})
                 continue
             if match["kind"] == "conflict":
                 conflicts.append(
                     {
-                        "note": i + 1,
+                        "note": i,
                         "front": _excerpt(front),
                         "existing": match["note_id"],
+                        "existing_back": _excerpt(match["back"], 160),
                         "why": "same front, different back: decide by hand which one stays",
                     }
                 )
@@ -126,10 +161,11 @@ class Librarian:
             if match["kind"] == "similar":
                 similar.append(
                     {
-                        "note": i + 1,
+                        "note": i,
                         "front": _excerpt(front),
                         "similar_to": match["note_id"],
-                        "existing_front": match["front"],
+                        "existing_front": _excerpt(match["front"]),
+                        "existing_back": _excerpt(match["back"], 160),
                         "score": match["score"],
                     }
                 )
@@ -147,6 +183,7 @@ class Librarian:
         if to_add and not deck_exists:
             steps.append({"action": "createDeck", "params": {"deck": deck}})
         if to_add:
+            steps += media_steps
             steps.append({"action": "addNotes", "params": {"notes": to_add}})
         preview = {
             "deck": deck,
@@ -157,28 +194,69 @@ class Librarian:
             "skipped_duplicates": duplicates,
             "skipped_conflicts": conflicts,
             "similar_flagged": similar,
+            "images": len(media_steps),
+            "cards": card_report,
+            "warnings": warnings,
         }
         if not to_add and not errors:
             errors.append("nothing to add: every note already exists")
         return self._new_plan(kind, steps, preview, errors)
 
     def _reconcile(self, front: str, back: str) -> dict:
-        """Search the collection BEFORE creating: exact duplicate, conflict, similar, or new."""
+        """Search the collection BEFORE creating: exact duplicate, conflict, similar, or new.
+
+        Two routes, united: Anki's own search for each key word of the front, and the similarity index over
+        the whole collection (front and back), which also finds reworded cards.
+        """
         words = checks.keywords(front, 3) or checks.normalize(front).split()[:3]
         ids: list[int] = []
-        for w in words:  # one search per keyword, union: a reworded front still finds its neighbour
+        for w in words:
             ids += [i for i in self.anki.call("findNotes", {"query": f"w:{w.replace('_', '')}"}) if i not in ids]
-        ids = ids[:50]
-        best = {"kind": "new", "score": 0.0}
-        for n in self.anki.call("notesInfo", {"notes": ids}) if ids else []:
+        candidates = {}
+        for n in self.anki.call("notesInfo", {"notes": ids[:50]}) if ids else []:
             vals = [v["value"] for _, v in sorted(n["fields"].items(), key=lambda kv: kv[1]["order"])]
-            if checks.normalize(vals[0]) == checks.normalize(front):
-                same_back = len(vals) > 1 and checks.normalize(vals[1]) == checks.normalize(back)
-                return {"kind": "duplicate" if same_back or not back else "conflict", "note_id": n["noteId"]}
-            score = checks.similarity(vals[0], front)
-            if score >= self.s.similar_threshold and score > best["score"]:
-                best = {"kind": "similar", "note_id": n["noteId"], "front": _excerpt(vals[0]), "score": round(score, 2)}
+            candidates[n["noteId"]] = (vals[0], vals[1] if len(vals) > 1 else "", 0.0)
+        for hit in self.index.search(front, back, k=5):
+            old = candidates.get(hit["note_id"], (hit["front"], hit["back"], 0.0))
+            candidates[hit["note_id"]] = (old[0], old[1], hit["score"])
+        best = {"kind": "new", "score": 0.0}
+        for nid, (ofront, oback, cosine) in candidates.items():
+            if checks.normalize(ofront) == checks.normalize(front):
+                same_back = checks.normalize(oback) == checks.normalize(back)
+                kind = "duplicate" if same_back or not back else "conflict"
+                return {"kind": kind, "note_id": nid, "front": ofront, "back": oback}
+            ratio = checks.similarity(ofront, front)
+            score = max(
+                ratio if ratio >= self.s.similar_threshold else 0.0,
+                cosine if cosine >= self.s.retrieval_threshold else 0.0,
+            )
+            if score > best["score"]:
+                best = {"kind": "similar", "note_id": nid, "front": ofront, "back": oback, "score": round(score, 2)}
         return best
+
+    def propose_attach_image(self, note_id: int, image: dict, field: str = "Back") -> dict:
+        """Add a picture (local path or URL, with an optional credit line) to an existing note's field."""
+        info = self.anki.call("notesInfo", {"notes": [note_id]})
+        if not info or not info[0]:
+            raise PlanError(f"note {note_id} not found")
+        note = info[0]
+        if field not in note["fields"]:
+            raise PlanError(f"field {field!r} not in this note: {sorted(note['fields'])}")
+        errors = self._scope_errors(note.get("cards", []))
+        try:
+            name, step = media.prepare(image, self.s.state_dir, note["fields"][field]["value"], self.fetch)
+        except media.MediaError as e:
+            raise PlanError(f"image: {e}") from e
+        value = note["fields"][field]["value"] + media.html(name, image.get("credit", ""))
+        steps = [step, {"action": "updateNoteFields", "params": {"note": {"id": note_id, "fields": {field: value}}}}]
+        preview = {
+            "note_id": note_id,
+            "field": field,
+            "file": name,
+            "credit": image.get("credit", ""),
+            "mod_at_preview": note.get("mod"),
+        }
+        return self._new_plan("attach_image", steps, preview, errors)
 
     def propose_update_note(self, note_id: int, fields: dict | None = None, tags: list[str] | None = None) -> dict:
         if not fields and tags is None:
@@ -343,7 +421,7 @@ class Librarian:
                 f"plan {pid} is {plan['status']}: only an approved plan is applied "
                 f"(the human approves it: anki-librarian-mcp approve {pid})"
             )
-        if plan["kind"] == "update_note":  # stale-write protection
+        if plan["kind"] in ("update_note", "attach_image"):  # stale-write protection
             note = self.anki.call("notesInfo", {"notes": [plan["preview"]["note_id"]]})[0]
             if note.get("mod") != plan["preview"]["mod_at_preview"]:
                 self.plans.set_status(pid, "expired")
@@ -365,9 +443,27 @@ class Librarian:
             self.plans.set_status(pid, "failed", error=str(e)[:300], partial_results=results)
             raise
         report = self._verify(plan, results)
+        if plan["kind"] == "add_notes" and report.get("created"):
+            report["flagged_blue"] = self._flag_large(report["created"])
         self.plans.set_status(pid, "applied", result=report)
         self.audit.log("applied", plan=pid, kind=plan["kind"], result=report)
         return {"id": pid, "status": "applied", "result": report}
+
+    def _flag_large(self, note_ids: list[int]) -> int:
+        """Blue flag on new large cards (maps, macros, long backs) so they are easy to find and suspend later."""
+        large = [
+            n
+            for n in self.anki.call("notesInfo", {"notes": note_ids})
+            if n and cards.is_large(n["fields"]["Front"]["value"], n["fields"]["Back"]["value"])
+        ]
+        card_ids = [c for n in large for c in n.get("cards", [])]
+        flagged = 0
+        for c in self.anki.call("cardsInfo", {"cards": card_ids}) if card_ids else []:
+            if c.get("flags") == 0:
+                params = {"card": c["cardId"], "keys": ["flags"], "newValues": [4]}
+                self.anki.call("setSpecificValueOfCard", params, ok=True)
+                flagged += 1
+        return flagged
 
     def _verify(self, plan: dict, results: list) -> dict:
         """Read the collection back and compare with what the plan said it would do."""

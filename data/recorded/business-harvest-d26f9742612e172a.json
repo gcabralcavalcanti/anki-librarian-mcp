@@ -1,0 +1,125 @@
+{
+ "task": "business-harvest",
+ "model": "claude-haiku-5-5",
+ "recorded_at": "2026-10-20T01:48:43+00:00",
+ "usage": {
+  "input_tokens": 2785,
+  "output_tokens": 2408
+ },
+ "answer": {
+  "style": "B",
+  "objective": "deep-study",
+  "lens": "decision/business",
+  "themes": [
+   {
+    "title": "Unit economics core",
+    "output": "theory",
+    "items": [
+     {
+      "anchor": "Contribution margin",
+      "text": "Price $30 minus COGS and shipping $18 gives $12 per subscriber per month, a 40% margin. Value is measured on this margin, not on revenue.",
+      "marker": ""
+     },
+     {
+      "anchor": "CAC",
+      "text": "Customer acquisition cost is marketing spend divided by new subscribers in the same period. Example: $90,000 over 1,500 new subscribers gives $60.",
+      "marker": ""
+     },
+     {
+      "anchor": "LTV on margin",
+      "text": "Lifetime value is margin per month times expected lifetime: $12 × 12.5 ≈ $150.",
+      "marker": ""
+     },
+     {
+      "anchor": "LTV/CAC target",
+      "text": "LTV/CAC is about 2.5 here, below the rule-of-thumb minimum of 3 before scaling paid acquisition.",
+      "marker": "VERIFY"
+     },
+     {
+      "anchor": "CAC payback",
+      "text": "Payback is CAC divided by monthly margin: $60 / $12 = 5 months. Each new subscriber is a cash outflow for those 5 months.",
+      "marker": ""
+     }
+    ]
+   },
+   {
+    "title": "Churn and lifetime",
+    "output": "theory",
+    "items": [
+     {
+      "anchor": "Expected lifetime",
+      "text": "Expected lifetime in months ≈ 1 / monthly churn. At 8% churn that is about 12.5 months.",
+      "marker": "REVERSE"
+     },
+     {
+      "anchor": "Churn sensitivity",
+      "text": "Cutting churn from 8% to 6% raises lifetime to about 16.7 months and LTV to about $200.",
+      "marker": ""
+     },
+     {
+      "anchor": "First-month churn",
+      "text": "Early churn is usually much higher than later churn. A single average rate hides it, so read cohort retention curves.",
+      "marker": ""
+     }
+    ]
+   },
+   {
+    "title": "Pitfalls in the reasoning",
+    "output": "theory",
+    "items": [
+     {
+      "anchor": "Revenue instead of margin",
+      "text": "Computing LTV on revenue overstates value by 2.5× here (30 / 12).",
+      "marker": "APPLIED"
+     },
+     {
+      "anchor": "Fast growth burns cash",
+      "text": "With a 5-month payback, LTV/CAC can look healthy while growth still drains cash. Check payback next to LTV/CAC.",
+      "marker": ""
+     }
+    ]
+   },
+   {
+    "title": "Measuring and testing levers",
+    "output": "tools",
+    "items": [
+     {
+      "anchor": "CAC by channel and cohort",
+      "text": "Measure CAC per channel and per cohort, not blended. A blended figure hides an expensive channel behind a cheap one.",
+      "marker": "APPLIED"
+     },
+     {
+      "anchor": "Cohort retention curves",
+      "text": "Build retention by signup cohort to see first-month drop-off separately from later churn.",
+      "marker": ""
+     },
+     {
+      "anchor": "Price test on a traffic share",
+      "text": "Test a price rise to $33 for new subscribers on part of the traffic before rolling it out. This is a margin lever.",
+      "marker": ""
+     }
+    ]
+   },
+   {
+    "title": "Northwind decision: double ad spend",
+    "output": "story",
+    "items": [
+     {
+      "anchor": "The decision",
+      "text": "Marketing wants to double paid ads. CAC tends to rise with spend because the cheapest audiences are reached first, and LTV/CAC is already below 3 at 8% churn.",
+      "marker": ""
+     },
+     {
+      "anchor": "Levers on the table",
+      "text": "Churn levers: annual prepaid plan with discount, skip-a-month button. Margin lever: price rise to $33 for new subscribers. Measurement: CAC by channel and cohort.",
+      "marker": ""
+     }
+    ]
+   }
+  ],
+  "doubts": [],
+  "open_doubts": [
+   "Is the annual plan's discount worth the lower margin, given that it also brings the cash forward?"
+  ]
+ }
+}

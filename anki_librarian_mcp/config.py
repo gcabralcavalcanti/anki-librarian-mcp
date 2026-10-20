@@ -28,7 +28,9 @@ class Settings:
     approval: str = "elicit"  # elicit (ask the human through the MCP client) | cli | none (tests only)
     max_notes_per_plan: int = 50
     plan_ttl_minutes: int = 15
-    similar_threshold: float = 0.85
+    similar_threshold: float = 0.85  # fronts this alike (character level) are flagged as similar
+    retrieval_threshold: float = 0.45  # cosine similarity in the collection index that flags a similar card
+    card_rules: str = "enforce"  # enforce | warn | off: size ceilings and front checks on basic cards
     basic_model: str = "Basic"
     cloze_model: str = "Cloze"
     agent_flags: list[int] = field(default_factory=lambda: [0, 4])  # 4 = blue; 1 (red) is the human's
@@ -50,6 +52,8 @@ def load(path: str | os.PathLike | None = None) -> Settings:
     s.state_dir = Path(s.state_dir)
     if not s.state_dir.is_absolute():
         s.state_dir = path.parent / s.state_dir
+    if s.card_rules not in ("enforce", "warn", "off"):
+        raise ValueError(f"card_rules must be enforce, warn or off, not {s.card_rules!r}")
     if s.approval not in ("elicit", "cli", "none"):
         raise ValueError(f"approval must be elicit, cli or none, not {s.approval!r}")
     return s

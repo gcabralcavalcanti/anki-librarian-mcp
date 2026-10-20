@@ -8,3 +8,4 @@ dist/
 anki-librarian.toml
 .venv/
 .ruff_cache/
+output/logs/

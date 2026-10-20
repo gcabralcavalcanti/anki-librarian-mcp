@@ -27,6 +27,7 @@ class FakeAnki:
         self.notes: dict[int, dict] = {}
         self.cards: dict[int, dict] = {}
         self.received: list[str] = []
+        self.media: dict[str, str] = {}
         self._ids = itertools.count(1_700_000_000_000)
 
     # --------------------------------------------------------------- seeding
@@ -168,6 +169,13 @@ class FakeAnki:
         for k, v in zip(keys, newValues, strict=False):
             self.cards[card][k] = v
         return [True]
+
+    def a_storeMediaFile(self, filename, data=None, **kw):
+        self.media[filename] = data
+        return filename
+
+    def a_getMediaFilesNames(self, pattern="*"):
+        return [f for f in self.media if fnmatch.fnmatchcase(f, pattern)]
 
     def a_deleteDecks(self, decks, cardsToo=True):
         raise AssertionError("deleteDecks must never reach Anki")

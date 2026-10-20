@@ -1,6 +1,6 @@
-# anki-librarian-mcp - demo session (fake Anki, real server process over stdio)
+# Demo session: the real server process over stdio, with a practice Anki
 
-### find_notes(query='taylor')
+### find_notes('taylor')
 ```json
 {
  "query": "taylor",
@@ -11,30 +11,30 @@
    "note_id": 1700000000000,
    "model": "Basic",
    "tags": [
-    "Economics::Macro::MonetaryPolicy"
+    "Economics::Macroeconomics::Applied::Monetary.Economics"
    ],
    "decks": [
     "Economics::Macro"
    ],
    "fields": {
-    "Front": "What does the Taylor rule set?",
-    "Back": "The policy rate, from the inflation and output gaps"
+    "Front": "Macroeconomics: Taylor rule What does the Taylor rule set?",
+    "Back": "The policy rate, from the inflation gap and the output gap."
    }
   }
  ]
 }
 ```
 
-### propose_add_notes (4 notes, one with a bad tag)
+### propose_add_notes: 4 cards, one with a tag outside the taxonomy
 ```json
 {
- "id": "p-dea5c1",
+ "id": "p-3242bd",
  "kind": "add_notes",
  "status": "invalid",
- "expires": "2026-10-19T23:41:15+00:00",
+ "expires": "2026-10-20T02:07:57+00:00",
  "errors": [
   "note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)",
-  "note 4: no taxonomy tag (needs one under Economics, Humanities, Exact, Biology, Specific)"
+  "note 4: no taxonomy tag (needs one under Economics, Humanities, Exact.Sciences, Biological.Sciences, Specifics)"
  ],
  "preview": {
   "deck": "Economics::Macro",
@@ -42,14 +42,14 @@
   "model": "Basic",
   "to_add": 3,
   "fronts": [
-   "What does the Taylor rule target?",
-   "Taylor principle",
-   "Okun law"
+   "Macroeconomics: Taylor rule What does the Taylor rule target?",
+   "Macroeconomics: Taylor rule What is the Taylor principle?",
+   "Macroeconomics: Okun law How do output and unemployment move together?"
   ],
   "skipped_duplicates": [
    {
     "note": 1,
-    "front": "What does the Taylor rule set?",
+    "front": "Macroeconomics: Taylor rule What does the Taylor rule set?",
     "duplicate_of": 1700000000000
    }
   ],
@@ -57,24 +57,61 @@
   "similar_flagged": [
    {
     "note": 2,
-    "front": "What does the Taylor rule target?",
+    "front": "Macroeconomics: Taylor rule What does the Taylor rule target?",
     "similar_to": 1700000000000,
-    "existing_front": "What does the Taylor rule set?",
-    "score": 0.92
+    "existing_front": "Macroeconomics: Taylor rule What does the Taylor rule set?",
+    "existing_back": "The policy rate, from the inflation gap and the output gap.",
+    "score": 0.96
+   },
+   {
+    "note": 3,
+    "front": "Macroeconomics: Taylor rule What is the Taylor principle?",
+    "similar_to": 1700000000000,
+    "existing_front": "Macroeconomics: Taylor rule What does the Taylor rule set?",
+    "existing_back": "The policy rate, from the inflation gap and the output gap.",
+    "score": 0.86
    }
-  ]
+  ],
+  "images": 0,
+  "cards": [
+   {
+    "note": 1,
+    "layer": "mnemonic",
+    "weight": 1,
+    "chars": 59
+   },
+   {
+    "note": 2,
+    "layer": "mnemonic",
+    "weight": 1,
+    "chars": 16
+   },
+   {
+    "note": 3,
+    "layer": "mnemonic",
+    "weight": 1,
+    "chars": 63
+   },
+   {
+    "note": 4,
+    "layer": "mnemonic",
+    "weight": 1,
+    "chars": 54
+   }
+  ],
+  "warnings": []
  },
  "next": "fix the errors and propose again; an invalid plan cannot be approved"
 }
 ```
 
-### propose_add_notes (bad note removed)
+### propose_add_notes: corrected
 ```json
 {
- "id": "p-ca1365",
+ "id": "p-528654",
  "kind": "add_notes",
  "status": "pending",
- "expires": "2026-10-19T23:41:15+00:00",
+ "expires": "2026-10-20T02:07:57+00:00",
  "errors": [],
  "preview": {
   "deck": "Economics::Macro",
@@ -82,13 +119,13 @@
   "model": "Basic",
   "to_add": 2,
   "fronts": [
-   "What does the Taylor rule target?",
-   "Taylor principle"
+   "Macroeconomics: Taylor rule What does the Taylor rule target?",
+   "Macroeconomics: Taylor rule What is the Taylor principle?"
   ],
   "skipped_duplicates": [
    {
     "note": 1,
-    "front": "What does the Taylor rule set?",
+    "front": "Macroeconomics: Taylor rule What does the Taylor rule set?",
     "duplicate_of": 1700000000000
    }
   ],
@@ -96,34 +133,64 @@
   "similar_flagged": [
    {
     "note": 2,
-    "front": "What does the Taylor rule target?",
+    "front": "Macroeconomics: Taylor rule What does the Taylor rule target?",
     "similar_to": 1700000000000,
-    "existing_front": "What does the Taylor rule set?",
-    "score": 0.92
+    "existing_front": "Macroeconomics: Taylor rule What does the Taylor rule set?",
+    "existing_back": "The policy rate, from the inflation gap and the output gap.",
+    "score": 0.96
+   },
+   {
+    "note": 3,
+    "front": "Macroeconomics: Taylor rule What is the Taylor principle?",
+    "similar_to": 1700000000000,
+    "existing_front": "Macroeconomics: Taylor rule What does the Taylor rule set?",
+    "existing_back": "The policy rate, from the inflation gap and the output gap.",
+    "score": 0.86
    }
-  ]
+  ],
+  "images": 0,
+  "cards": [
+   {
+    "note": 1,
+    "layer": "mnemonic",
+    "weight": 1,
+    "chars": 59
+   },
+   {
+    "note": 2,
+    "layer": "mnemonic",
+    "weight": 1,
+    "chars": 16
+   },
+   {
+    "note": 3,
+    "layer": "mnemonic",
+    "weight": 1,
+    "chars": 63
+   }
+  ],
+  "warnings": []
  },
  "next": "show this preview to the human, then call apply_plan; the human approves it"
 }
 ```
 
-### Elicitation shown to the human
+### Approval form shown to you
 ```
-Plan p-ca1365 (add_notes)
+Plan p-528654 (add_notes)
 Add 2 note(s) to 'Economics::Macro'
-  + What does the Taylor rule target?
-  + Taylor principle
+  + Macroeconomics: Taylor rule What does the Taylor rule target?
+  + Macroeconomics: Taylor rule What is the Taylor principle?
 Skipped as duplicates: 1
-Similar to existing notes: 1 (check before approving)
+Similar to existing notes: 2 (check before approving)
 
 Write this to Anki?
 ```
--> the human clicks **approve**
 
 ### apply_plan
 ```json
 {
- "id": "p-ca1365",
+ "id": "p-528654",
  "status": "applied",
  "result": {
   "created": [
@@ -131,7 +198,8 @@ Write this to Anki?
    1700000000004
   ],
   "not_created": 0,
-  "mismatched_after_write": []
+  "mismatched_after_write": [],
+  "flagged_blue": 0
  }
 }
 ```
@@ -143,11 +211,11 @@ is_error=True: Error executing tool propose_delete_notes: BLOCKED: deleteNotes i
 
 ### Audit log
 ```
-{"event": "proposed", "plan": "p-dea5c1", "kind": "add_notes", "status": "invalid", "errors": ["note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)", "note 4: no taxonomy tag (needs one under Economics, Humanities, Exact, Biology, Specific)"], "steps": ["addNotes"]}
-{"event": "proposed", "plan": "p-ca1365", "kind": "add_notes", "status": "pending", "errors": [], "steps": ["addNotes"]}
-{"event": "approved", "plan": "p-ca1365", "via": "mcp elicitation"}
-{"event": "applied", "plan": "p-ca1365", "kind": "add_notes", "result": {"created": [1700000000002, 1700000000004], "not_created": 0, "mismatched_after_write": []}}
+{"event": "proposed", "plan": "p-3242bd", "kind": "add_notes", "status": "invalid", "errors": ["note 4: tag 'economics::macro': unknown root 'economics' (did you mean Economics?)", "note 4: no taxonomy tag (needs one under Economics, Humanities, Exact.Sciences, Biological.Sciences, Specifics)"], "steps": ["addNotes"]}
+{"event": "proposed", "plan": "p-528654", "kind": "add_notes", "status": "pending", "errors": [], "steps": ["addNotes"]}
+{"event": "approved", "plan": "p-528654", "via": "mcp elicitation"}
+{"event": "applied", "plan": "p-528654", "kind": "add_notes", "result": {"created": [1700000000002, 1700000000004], "not_created": 0, "mismatched_after_write": [], "flagged_blue": 0}}
 {"event": "blocked", "error": "BLOCKED: deleteNotes is off. Turning it on is the human's decision (allow_delete = true in the config)."}
 ```
 
-Actions that reached the (fake) Anki: ['addNotes', 'cardsInfo', 'deckNames', 'findNotes', 'notesInfo']
+Actions that reached the practice Anki: ['addNotes', 'cardsInfo', 'deckNames', 'findNotes', 'notesInfo']

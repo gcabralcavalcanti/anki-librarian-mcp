@@ -1,0 +1,108 @@
+{
+ "task": "econometrics-harvest",
+ "model": "claude-haiku-5-5",
+ "recorded_at": "2026-10-20T01:47:13+00:00",
+ "usage": {
+  "input_tokens": 3058,
+  "output_tokens": 2136
+ },
+ "answer": {
+  "style": "D",
+  "objective": "deep-study",
+  "lens": "technical-quantitative",
+  "themes": [
+   {
+    "title": "What heteroskedasticity breaks and what it does not",
+    "output": "theory",
+    "items": [
+     {
+      "anchor": "OLS stays unbiased and consistent",
+      "text": "Unbiasedness needs only exogeneity E[u|X]=0, which still holds when error variance varies with the regressors, so the estimates themselves are fine.",
+      "marker": ""
+     },
+     {
+      "anchor": "Standard errors are wrong",
+      "text": "The usual sigma^2(X'X)^-1 formula assumes homoskedasticity. With heteroskedasticity, t-tests and confidence intervals are invalid; in the spending example they tend to be too small, so the null is rejected too often.",
+      "marker": ""
+     },
+     {
+      "anchor": "OLS loses efficiency",
+      "text": "Gauss-Markov requires homoskedasticity, so under heteroskedasticity OLS is not BLUE any more.",
+      "marker": ""
+     }
+    ]
+   },
+   {
+    "title": "Detecting heteroskedasticity",
+    "output": "theory",
+    "items": [
+     {
+      "anchor": "Residuals against fitted values",
+      "text": "A funnel shape in the plot is the classic visual sign.",
+      "marker": ""
+     },
+     {
+      "anchor": "Breusch-Pagan test",
+      "text": "Regress squared residuals on the regressors; under the null of homoskedasticity, n times R^2 from that auxiliary regression is chi-squared with k degrees of freedom.",
+      "marker": "APPLIED"
+     },
+     {
+      "anchor": "White test",
+      "text": "Same logic as Breusch-Pagan but the auxiliary regression also includes squares and cross-products of the regressors, so it catches non-linear forms at the cost of many degrees of freedom.",
+      "marker": ""
+     }
+    ]
+   },
+   {
+    "title": "Remedies",
+    "output": "theory",
+    "items": [
+     {
+      "anchor": "Robust standard errors (sandwich estimator)",
+      "text": "Keep OLS and replace sigma^2 X'X in the middle with the sum of squared residuals times x_i x_i'. Valid in large samples whatever the form of heteroskedasticity; the default in applied work.",
+      "marker": "VERIFY"
+     },
+     {
+      "anchor": "Weighted least squares with known variance form",
+      "text": "If Var(u_i|x_i)=sigma^2 h(x_i), divide each observation by sqrt(h(x_i)). The transformed model is homoskedastic and WLS is efficient.",
+      "marker": ""
+     },
+     {
+      "anchor": "Feasible GLS with estimated h",
+      "text": "Efficiency holds only asymptotically, and a wrong specification of h can hurt.",
+      "marker": ""
+     },
+     {
+      "anchor": "Log transformation",
+      "text": "Taking logs of money variables often reduces heteroskedasticity.",
+      "marker": ""
+     }
+    ]
+   },
+   {
+    "title": "Small samples and robust errors",
+    "output": "theory",
+    "items": [
+     {
+      "anchor": "Small-sample corrections HC2 and HC3",
+      "text": "In small samples robust standard errors can be biased downward, so HC2 or HC3 corrections are preferred. Cheap in large samples, so robust errors are a safe default there.",
+      "marker": "VERIFY"
+     }
+    ]
+   }
+  ],
+  "doubts": [
+   {
+    "question": "If the coefficients are still unbiased, why care?",
+    "resolution": "Because inference is what gets reported; a wrong standard error can turn a noisy estimate into a significant one."
+   },
+   {
+    "question": "Should robust standard errors always be used?",
+    "resolution": "In large samples they cost little; in small samples they can be biased downward, so HC2 or HC3 are preferred."
+   }
+  ],
+  "open_doubts": [
+   "When exactly does WLS with an estimated variance function beat OLS with robust errors in practice?"
+  ]
+ }
+}

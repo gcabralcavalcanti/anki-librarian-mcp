@@ -1,0 +1,93 @@
+{
+ "task": "econometrics-cards",
+ "model": "claude-haiku-5-5",
+ "recorded_at": "2026-10-20T01:48:32+00:00",
+ "usage": {
+  "input_tokens": 15413,
+  "output_tokens": 10681
+ },
+ "answer": {
+  "cards": [
+   {
+    "layer": "reconstruction",
+    "front": "Econometrics: heteroskedasticity <br><br> Why do the usual standard errors go wrong when the error variance changes with x?",
+    "back": "The formula \\(\\sigma^2 (X'X)^{-1}\\) assumes one constant error variance. <br><br> With varying variance, the true spread of \\(\\hat{\\beta}\\) differs from that formula → the usual standard errors misstate it. <br><br> In the spending example they are usually too small, so tests reject too often.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "reconstruction",
+    "front": "Econometrics: heteroskedasticity <br><br> If the coefficients are still unbiased, why does heteroskedasticity matter?",
+    "back": "We report inference, not only the estimate. <br><br> A wrong standard error can turn a noisy estimate into one that looks significant.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "reconstruction",
+    "front": "Econometrics: heteroskedasticity <br><br> Why is OLS no longer the best linear unbiased estimator under heteroskedasticity?",
+    "back": "Gauss-Markov needs a constant error variance. <br><br> → With unequal variances, a weighted estimator has smaller variance than OLS.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Econometrics: heteroskedasticity tests <br><br> How does the Breusch-Pagan test detect heteroskedasticity?",
+    "back": "→ Regress the squared residuals \\(\\hat{u}^2\\) on the regressors. <br><br> → Under homoskedasticity, \\(nR^2\\) from that auxiliary regression follows a chi-squared distribution with k degrees of freedom. <br><br> → A value above the critical chi-squared rejects homoskedasticity.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "mnemonic",
+    "front": "Econometrics: heteroskedasticity tests <br><br> How does the White test differ from Breusch-Pagan?",
+    "back": "It adds squares and cross-products of the regressors to the auxiliary regression. <br><br> It catches non-linear forms but spends many degrees of freedom.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "reconstruction",
+    "front": "Econometrics: robust standard errors <br><br> Keeping OLS, how does the sandwich estimator replace the variance formula?",
+    "back": "→ It replaces \\(\\sigma^2 X'X\\) in the middle by \\(\\sum_i \\hat{u}_i^2 x_i x_i'\\). <br><br> → It is valid in large samples whatever the form of heteroskedasticity.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "reconstruction",
+    "front": "Econometrics: WLS <br><br> If \\(Var(u_i \\mid x_i) = \\sigma^2 h(x_i)\\) is known, how do you make the model homoskedastic?",
+    "back": "→ Divide each observation, including the constant, by \\(\\sqrt{h(x_i)}\\). <br><br> → The transformed errors have constant variance, so WLS is efficient.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "reconstruction",
+    "front": "Econometrics: FGLS <br><br> What changes when the variance function h is estimated rather than known?",
+    "back": "Efficiency holds only asymptotically, in large samples. <br><br> A misspecified h can hurt the estimator.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "reconstruction",
+    "front": "Econometrics: robust standard errors <br><br> Should robust standard errors always be used?",
+    "back": "In large samples they cost little, so they are the default. <br><br> In small samples they can be biased downward, so HC2 and HC3 corrections are preferred.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   },
+   {
+    "layer": "reconstruction",
+    "front": "Econometrics: WLS and robust errors <br><br> When exactly does WLS with an estimated variance function beat OLS with robust errors in practice?",
+    "back": "Open question from class, not resolved. <br><br> A way to settle it: compare the precision of both estimates on the same data.",
+    "tags": [
+     "Exact.Sciences::Quantitative::Statistics::Regressions"
+    ]
+   }
+  ]
+ }
+}

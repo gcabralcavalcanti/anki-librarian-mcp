@@ -1,2 +1,4 @@
 mcp>=2.3,<3
 pydantic>=2
+jsonschema>=4
+anthropic>=1.15,<2

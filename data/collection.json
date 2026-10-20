@@ -1,0 +1,11 @@
+{
+  "_comment": "Fictitious collection used by demo.py: a few cards already 'studied', so the search before creating has something to find.",
+  "notes": [
+    {"deck": "Statistics", "front": "Econometrics: OLS <br><br> Why is exogeneity decisive for reading \\(\\hat{\\beta}\\) as unbiased?", "back": "<b>Exogeneity</b> means \\(E[u \\mid X] = 0\\). <br><br> With it the error drops out in expectation → \\(E[\\hat{\\beta}] = \\beta\\).", "tags": ["Exact.Sciences::Quantitative::Statistics::Regressions"]},
+    {"deck": "Statistics", "front": "Econometrics: OLS <br><br> Which conditions does the Gauss-Markov theorem require for OLS to be the best linear unbiased estimator?", "back": "Linearity, random sampling, no perfect collinearity, exogeneity and <b>homoskedasticity</b> (constant error variance).", "tags": ["Exact.Sciences::Quantitative::Statistics::Regressions"]},
+    {"deck": "Statistics", "front": "Statistics: hypothesis testing <br><br> What does a p-value measure?", "back": "The probability of a result at least as extreme as the one observed if the null hypothesis were true.", "tags": ["Exact.Sciences::Quantitative::Statistics::Inference"]},
+    {"deck": "Business", "front": "Business: metrics <br><br> How is customer acquisition cost calculated?", "back": "Marketing and sales spend in a period divided by the number of new customers acquired in that same period.", "tags": ["Economics::Business&Management::Sales&Marketing"]},
+    {"deck": "Business", "front": "Finance: valuation <br><br> What does a discount rate represent in a cash-flow valuation?", "back": "The return an investor requires for the risk taken; it converts future cash into today's value.", "tags": ["Economics::Business&Management::Finance"]},
+    {"deck": "Biology", "front": "Biochemistry: citric acid cycle <br><br> Where in a eukaryotic cell does the citric acid cycle take place?", "back": "In the mitochondrial matrix.", "tags": ["Biological.Sciences::Cell.and.Molecular::Bioenergetics"]}
+  ]
+}

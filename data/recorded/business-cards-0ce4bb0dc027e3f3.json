@@ -1,0 +1,94 @@
+{
+ "task": "business-cards",
+ "model": "claude-haiku-5-5",
+ "recorded_at": "2026-10-20T01:51:24+00:00",
+ "usage": {
+  "input_tokens": 15499,
+  "output_tokens": 12886
+ },
+ "answer": {
+  "cards": [
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> How is the value of a subscriber's monthly box measured?",
+    "back": "<b>Contribution margin:</b> price minus cost per box: $30 − $18 = $12 (40%). <br><br> Revenue is not the basis, because the $18 cost is paid on every box.",
+    "tags": [
+     "Economics::Business&Management::Accounting"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> How is lifetime value computed on margin, and what moves it?",
+    "back": "<b>LTV</b> = margin per month × expected lifetime: $12 × 12.5 ≈ $150. <br><br> Lifetime ≈ 1/churn, so lower churn raises LTV: 6% churn gives about $200.",
+    "tags": [
+     "Economics::Business&Management::Sales&Marketing"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> What lifetime does a monthly churn rate imply, and the reverse?",
+    "back": "<b>Lifetime</b> ≈ 1 / monthly churn: 8% gives about 12.5 months. <br><br> Reverse: a 12.5-month lifetime implies churn of about 8% per month.",
+    "tags": [
+     "Economics::Business&Management::Sales&Marketing"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> How many months does a new subscriber take to repay acquisition cost, and what cash does that imply?",
+    "back": "<b>Payback</b> = CAC / monthly margin: $60 / $12 = 5 months. <br><br> → Each new subscriber is a cash outflow for those 5 months.",
+    "tags": [
+     "Economics::Business&Management::Finance"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> Is LTV/CAC of 2.5 enough to scale paid acquisition, and what does payback add?",
+    "back": "<b>Rule of thumb:</b> at least 3 before scaling; $150 / $60 = 2.5 is below it. <br><br> Payback of 5 months adds the cash view: fast growth burns cash even when LTV/CAC looks fine.",
+    "tags": [
+     "Economics::Business&Management::Sales&Marketing",
+     "Economics::Business&Management::Finance"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> What does one average churn rate hide, and how do cohort curves show it?",
+    "back": "<b>First-month churn</b> is usually far above later churn, so an average hides it. <br><br> Cohort retention curves, one per signup month, show where the drop-off happens.",
+    "tags": [
+     "Economics::Business&Management::Sales&Marketing"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> What does LTV computed on revenue instead of margin do to the estimate?",
+    "back": "<b>Overstatement:</b> revenue is $30 and margin $12, so LTV on revenue is 2.5× too high. <br><br> → Value must use margin, the money left after the cost per box.",
+    "tags": [
+     "Economics::Business&Management::Accounting"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> What can a blended CAC hide, and how should acquisition cost be measured instead?",
+    "back": "<b>Blended CAC</b> averages all channels, so a cheap channel can mask an expensive one. <br><br> → Measure CAC by channel and by cohort, using same-period spend and new subscribers for each.",
+    "tags": [
+     "Economics::Business&Management::Sales&Marketing"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> Northwind wants to double ad spend. What should decide it, given CAC and LTV/CAC?",
+    "back": "<b>Two problems:</b> CAC usually rises with spend, since the cheapest audiences are reached first. <br><br> → At 8% churn, LTV/CAC is about 2.5, below the rule-of-thumb 3.",
+    "tags": [
+     "Economics::Business&Management::Sales&Marketing"
+    ]
+   },
+   {
+    "layer": "macro",
+    "front": "[Macro] Business&Management: unit economics <br><br> Is the annual plan's discount worth the lower margin, given that it also brings the cash forward?",
+    "back": "<b>Open question:</b> not yet resolved. <br><br> Weigh the discount against the lower margin per box and the cash received upfront.",
+    "tags": [
+     "Economics::Business&Management::Finance"
+    ]
+   }
+  ]
+ }
+}

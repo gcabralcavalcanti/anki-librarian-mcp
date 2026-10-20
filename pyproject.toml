@@ -14,12 +14,16 @@ dependencies = ["mcp>=2.3,<3", "pydantic>=2"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
+demo = ["jsonschema>=4", "anthropic>=1.15,<2"]
 
 [project.scripts]
 anki-librarian-mcp = "anki_librarian_mcp.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["anki_librarian_mcp*"]
+
+[tool.setuptools.package-data]
+anki_librarian_mcp = ["skills/*.md", "report.css"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -31,4 +35,5 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["SIM905"]  # word lists read better as one string
 

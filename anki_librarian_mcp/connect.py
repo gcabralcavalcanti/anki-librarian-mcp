@@ -31,6 +31,7 @@ READ = {
     "canAddNotes",
     "canAddNotesWithErrorDetail",
     "getDeckConfig",
+    "getMediaFilesNames",
 }
 WRITE = {
     "addNotes",
@@ -42,6 +43,7 @@ WRITE = {
     "suspend",
     "unsuspend",
     "createDeck",
+    "storeMediaFile",
 }
 SWITCHED = {"deleteNotes": "allow_delete", "setDueDate": "allow_reschedule"}
 FORBIDDEN = {
@@ -56,7 +58,6 @@ FORBIDDEN = {
     "importPackage",
     "sync",
     "updateModelTemplates",
-    "storeMediaFile",
     "deleteMediaFile",
     "guiExitAnki",
 }
