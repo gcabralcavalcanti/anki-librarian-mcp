@@ -1,7 +1,44 @@
 # How it works
 
 The detail behind the README: what the server does at each step, how to install and use it, the safety rules, the
-data and how to start on your own collection. Operations and troubleshooting are in [`RUNBOOK.md`](../RUNBOOK.md).
+data, how I use it and how to schedule the radar, and how to start on your own collection. Operations and troubleshooting are in [`RUNBOOK.md`](../RUNBOOK.md).
+
+## How I use it
+
+Most of my cards come from four places, in this order:
+
+| Source | How often | What starts it | What I do |
+|---|---|---|---|
+| **The weekly radar** (the main source) | every week, one track per week | a scheduled task on Thursday night | Friday: I tick lines on the menu it left; only those become cards |
+| **Quick questions** | weekly | the same Thursday night task reads my list of questions from the week | I approve the proposed cards |
+| **End of a project** | when a project or course module closes | I ask ("harvest this project") | I move items in the plan, then approve the cards |
+| **Dense material** | when I study a hard subject | I paste the notes ("make cards from this") | I approve the plan and the cards |
+
+Every two weeks the same Thursday task proposes tag fixes, and every six weeks a maintenance pass lists collection
+numbers and cards worth suspending (that pass lives in my private setup, not in this repository). The scheduled part
+only prepares: it reads the collection and writes a menu or a plan to a file. Nothing reaches Anki until I approve
+it. How much study time the cards need each week is planned on the calendar side: see the study blocks demo in
+[personal-ai-agents](https://github.com/gcabralcavalcanti/personal-ai-agents).
+
+## Schedule the radar
+
+The radar does not run by itself: you ask for it ("this week's radar on finance") or you schedule it. The scheduled
+run should only build the menu; picking the lines and approving the cards stays with you.
+
+- **Claude Desktop:** create a weekly scheduled task with a prompt such as *"Run the weekly radar for this week's
+  track. Search my collection for what already exists, save the menu to `radar/MENU-<date>.md`, and do not
+  propose or write any card."*
+- **Windows Task Scheduler or cron:** run Claude Code without a window, giving it only the reading tools:
+
+  ```
+  claude -p "Run the weekly radar for this week's track and save the menu to radar/MENU-<date>.md. Do not propose cards." --allowedTools "mcp__anki__list_decks mcp__anki__find_notes mcp__anki__get_notes mcp__anki__skill WebSearch WebFetch Write"
+  ```
+
+  (`anki` is the name you gave the server when you connected it.) Without the proposing tools the run cannot
+  even suggest a change; and any plan still needs your approval and expires after 15 minutes.
+
+Then, when you sit down for the radar, open Claude and say "let's do the radar menu": it starts from the saved
+menu, and only the lines you tick become cards.
 
 ## What it does
 

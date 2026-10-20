@@ -7,6 +7,13 @@ description: Weekly scan of current events by track; the user picks from a menu 
 A process, not a subject: there is no "Radar" deck tree. Each week covers one track; what is worth keeping goes
 to an existing subject deck, and what only matters for a few weeks goes to a single buffer deck and expires.
 
+## When it runs
+
+It never runs by itself: the user asks for it, or schedules it (weekly is the usual rhythm). A scheduled run only reads:
+it lists the expired buffer cards (step 1) and the values that changed (step 2), builds the menu (step 3), saves all
+of it to a file (for example `radar/MENU-<date>.md`) and stops. Every proposal, and step 4, waits for the user. When the user asks for the radar and a menu for this week already exists, start
+from it and redo only what it marks as failed.
+
 ## Three kinds of result
 
 | Kind | Example | Where it goes | Tag |

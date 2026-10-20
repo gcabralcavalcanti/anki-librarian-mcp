@@ -26,10 +26,17 @@ python demo.py
 Runs without an API key, replaying recorded answers. Set `ANTHROPIC_API_KEY` and add `--live` to call Claude live.
 It uses a practice collection; your Anki is not touched.
 
+## How I use it
+
+Most of my cards come from a weekly radar of news and data by topic, prepared by a scheduled task on Thursday
+night; I pick from its menu and approve the cards. The rest come from quick questions, the end of a project and
+dense study material. The radar does not run by itself: you ask for it or schedule it
+([how](docs/how-it-works.md#schedule-the-radar)).
+
 ## More
 
-- [How it works](docs/how-it-works.md): each step, the safety rules, installing it for Claude Desktop or Claude
-  Code, and how to start on your own collection with a test deck.
+- [How it works](docs/how-it-works.md): how I use it, each step, the safety rules, installing it for Claude
+  Desktop or Claude Code, and how to start on your own collection with a test deck.
 - [Runbook](RUNBOOK.md): commands, updating, and what to do when something breaks.
 - The other side of the flashcards, how much review time each deck needs in the week, is in
   [personal-ai-agents](https://github.com/gcabralcavalcanti/personal-ai-agents) (study blocks).
