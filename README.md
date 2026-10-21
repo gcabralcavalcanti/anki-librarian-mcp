@@ -1,7 +1,7 @@
 # anki-librarian-mcp
 
-Lets Claude turn your study material into Anki flashcards and manage your collection, without ever writing
-anything you have not approved.
+Public version of the flashcard workflow I use in my own studies: Claude turns study material into Anki cards and
+manages the collection, without ever writing anything you have not approved.
 
 **[Live demo](https://gcabralcavalcanti.github.io/anki-librarian-mcp/)**: the step-by-step simulation, built from this repository on every push.
 
